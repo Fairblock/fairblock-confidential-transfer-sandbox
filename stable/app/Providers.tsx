@@ -3,17 +3,12 @@
 
 import { PrivyProvider } from '@privy-io/react-auth';
 import { defineChain } from 'viem';
-import { baseSepolia, sepolia, arbitrumSepolia,stableTestnet,tempoModerato,arcTestnet } from 'viem/chains';
+import { stableTestnet } from 'viem/chains';
 
 
 
 export const supportedChains = [
-    stableTestnet,
-    arcTestnet,
-    baseSepolia, 
-    sepolia,     
-    arbitrumSepolia, 
-    tempoModerato
+    stableTestnet
 ];
 
 

@@ -4,8 +4,8 @@ import "./globals.css";
 import Providers from "./Providers";
 
 export const metadata: Metadata = {
-  title: "Confidential Token App",
-  description: "Secure confidential transfers.",
+  title: "Fairblock Confidential Transfer Sandbox",
+  description: "Secure confidential transfers on Fairblock Sandbox.",
 };
 
 export default function RootLayout({

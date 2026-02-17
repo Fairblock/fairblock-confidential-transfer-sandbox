@@ -40,6 +40,7 @@ export function useConfidentialClient() {
   const [balances, setBalances] = useState({
     public: "0",
     confidential: "0",
+    native: "0",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,45 +125,59 @@ export function useConfidentialClient() {
 
   // Fetch Balances
   const fetchBalances = useCallback(async (silent: boolean = false) => {
-    if (!client || !signer || !userKeys) return;
+    if (!signer) return;
     if (!silent) setLoading(true);
     try {
       const address = await signer.getAddress();
+      const provider = signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
+      
+      // Always fetch native balance
+      const nativeBal = await provider.getBalance(address);
+      
+      let publicBal = BigInt(0);
+      let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
 
-      // Public Balance
-      const publicBal = await client.getPublicBalance(address, config.tokenAddress);
-
-      // Confidential Balance
-      const confidentialBal = await client.getConfidentialBalance(
-        address,
-        userKeys.privateKey,
-        config.tokenAddress
-      );
+      // Only fetch token balances if client and keys exist
+      if (client && userKeys) {
+          try {
+            publicBal = await client.getPublicBalance(address, config.tokenAddress);
+            const cb = await client.getConfidentialBalance(
+                address,
+                userKeys.privateKey,
+                config.tokenAddress
+            );
+            // Ensure compatibility (sdk returns amount as number or bigint, we need consistent usage)
+            confidentialBal = { amount: BigInt(cb.amount) };
+          } catch (e) {
+              console.warn("Failed to fetch token balances", e);
+          }
+      }
 
       setBalances({
         public: ethers.formatUnits(publicBal, tokenDecimals),
-        confidential: ethers.formatUnits(confidentialBal.amount, 2), // Confidential always 2 decimals as requested
+        confidential: ethers.formatUnits(confidentialBal.amount, 2),
+        native: ethers.formatEther(nativeBal),
       });
     } catch (err) {
       console.error("Error fetching balances:", err);
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [client, signer, userKeys, config.tokenAddress, tokenDecimals]);
+  }, [client, signer, userKeys, config.tokenAddress, tokenDecimals, config.rpcUrl]);
 
   // Polling for balances
   useEffect(() => {
-    if (!client || !signer || !userKeys) return;
+    if (!signer) return;
     
     // Initial fetch
     fetchBalances(true);
 
     const interval = setInterval(() => {
       fetchBalances(true);
-    }, 30000); // 30 seconds
+    }, 10000); // Poll every 10 seconds for faster updates
 
     return () => clearInterval(interval);
-  }, [fetchBalances, client, signer, userKeys]);
+  }, [fetchBalances, signer]);
 
   // Confidential Deposit
   const confidentialDeposit = useCallback(
@@ -251,7 +266,7 @@ export function useConfidentialClient() {
 
   return {
     config,
-    setConfig,
+
     client,
     signer,
     userKeys,

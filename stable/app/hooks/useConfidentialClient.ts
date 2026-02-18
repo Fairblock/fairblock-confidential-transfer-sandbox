@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { ConfidentialTransferClient } from "@fairblock/stabletrust";
+import { parseError } from "../utils/errorParser";
 
 export interface ConfidentialConfig {
   rpcUrl: string;
@@ -114,7 +115,7 @@ export function useConfidentialClient() {
       setUserKeys(keys);
       return keys;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to ensure account";
+      const errorMessage = parseError(err);
       setError(errorMessage);
       console.error(err);
       throw err;
@@ -199,7 +200,7 @@ export function useConfidentialClient() {
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Deposit failed";
+        const errorMessage = parseError(err);
         setError(errorMessage);
         throw err;
       } finally {
@@ -227,7 +228,7 @@ export function useConfidentialClient() {
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Transfer failed";
+        const errorMessage = parseError(err);
         setError(errorMessage);
         throw err;
       } finally {
@@ -254,7 +255,7 @@ export function useConfidentialClient() {
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Withdraw failed";
+        const errorMessage = parseError(err);
         setError(errorMessage);
         throw err;
       } finally {

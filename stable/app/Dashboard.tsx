@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useConfidentialClient } from './hooks/useConfidentialClient';
+import { parseError } from './utils/errorParser';
 import { Toaster, toast } from 'sonner';
 import { supportedChains } from './Providers';
 
@@ -60,9 +61,10 @@ export default function Dashboard() {
       setWithdrawAmount('');
     } catch (err: any) {
       console.error(err); // Log full error for debugging
+      const errorMessage = parseError(err);
       toast.error(`${actionName} Failed`, {
         id: toastId,
-        description: 'Transaction failed. Please try again.', // Minimal error
+        description: errorMessage,
       });
     }
   };
@@ -81,7 +83,7 @@ export default function Dashboard() {
         
         if (!response.ok) throw new Error(data.error || 'Faucet request failed');
         
-        toast.success('Funds Received!', {
+        toast.success('Funds Received!It will take a few seconds to appear in your wallet', {
             id: toastId,
             description: (
                 <a 
@@ -101,9 +103,10 @@ export default function Dashboard() {
         setTimeout(fetchBalances, 3000);
         setTimeout(fetchBalances, 6000);
     } catch (err: any) {
+        const errorMessage = parseError(err);
         toast.error('Faucet Failed', {
             id: toastId,
-            description: 'Request failed. Please try again.',
+            description: errorMessage,
         });
     } finally {
         setFaucetLoading(false);

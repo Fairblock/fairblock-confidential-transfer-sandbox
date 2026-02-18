@@ -1,0 +1,28 @@
+
+@import "tailwindcss";
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .btn-primary {
+    @apply bg-black text-white px-4 py-2 hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply border border-black text-black px-4 py-2 hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .input-primary {
+    @apply border border-black px-3 py-2 outline-none focus:ring-1 focus:ring-black w-full rounded-none;
+  }
+  .card {
+    @apply border border-black p-6;
+  }
+}

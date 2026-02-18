@@ -34,6 +34,19 @@ export default function Dashboard() {
 
   const [faucetLoading, setFaucetLoading] = useState(false);
 
+  const linkedSmartWalletAddress =
+    user?.linkedAccounts?.find(
+      (account) => account.type === "smart_wallet" && "address" in account,
+    )?.address ?? null;
+
+  const linkedWalletAddress =
+    user?.linkedAccounts?.find(
+      (account) => account.type === "wallet" && "address" in account,
+    )?.address ?? null;
+
+  const resolvedAddress =
+    user?.wallet?.address ?? linkedSmartWalletAddress ?? linkedWalletAddress;
+
   // Helper to handle transactions with toast notifications
   const handleTransaction = async (
     actionName: string,
@@ -71,14 +84,14 @@ export default function Dashboard() {
   };
 
   const handleFaucetRequest = async () => {
-    if (!user?.wallet?.address) return;
+    if (!resolvedAddress) return;
     setFaucetLoading(true);
     const toastId = toast.loading("Requesting 0.25 USDC...");
     try {
       const response = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: user.wallet.address }),
+        body: JSON.stringify({ address: resolvedAddress }),
       });
       const data = await response.json();
 
@@ -120,7 +133,7 @@ export default function Dashboard() {
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-4xl font-bold mb-8">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-8 whitespace-nowrap truncate max-w-full px-4 text-center">
           Fairblock Confidential Transfer Sandbox
         </h1>
         <button onClick={login} className="btn-primary text-xl px-8 py-4">
@@ -131,28 +144,32 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto">
+    <div className="min-h-screen p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
       <Toaster position="top-right" />
 
-      <header className="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-black pb-4 gap-4 md:gap-0">
+      <header className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 border-b border-black pb-4 gap-4 md:gap-0">
         <div className="text-center md:text-left">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-lg sm:text-2xl font-bold whitespace-nowrap truncate max-w-full">
             Fairblock Confidential Transfer Sandbox
           </h1>
           <a
             href="https://www.npmjs.com/package/@fairblock/stabletrust"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 underline hover:text-blue-800"
+            className="inline-flex items-center gap-1.5 text-xs text-blue-600 underline hover:text-blue-800"
           >
+            <span className="inline-flex items-center rounded bg-red-600 text-white font-bold px-1.5 py-0.5 leading-none">
+              npm
+            </span>
             npm package
           </a>
           <p className="text-xs text-gray-500 mt-1">
-            Connected: {user?.wallet?.address?.slice(0, 6)}...
-            {user?.wallet?.address?.slice(-4)}
+            {resolvedAddress
+              ? `Connected: ${resolvedAddress.slice(0, 6)}...${resolvedAddress.slice(-4)}`
+              : "Connected"}
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 whitespace-nowrap overflow-x-auto max-w-full">
           <button
             onClick={handleFaucetRequest}
             disabled={faucetLoading}
@@ -206,22 +223,22 @@ export default function Dashboard() {
       )}
 
       {!userKeys ? (
-        <div className="card text-center py-12">
+        <div className="card text-center py-10 md:py-16">
           {parseFloat(balances.native) < 0.001 ? (
             <>
               <h2 className="text-xl mb-4">Insufficient Funds</h2>
               <p className="mb-6 text-gray-600">
-                You need testnet tokens (USDC/ETH) to pay for gas fees.
+                You need testnet tokens (USDC).
               </p>
               <button
                 onClick={handleFaucetRequest}
                 className="btn-primary bg-green-600 hover:bg-green-700 border-green-700"
                 disabled={faucetLoading}
               >
-                {faucetLoading ? "Sending funds..." : "Get 0.25 USDC Now"}
+                {faucetLoading ? "Sending funds..." : "Claim 0.25 USDC"}
               </button>
               <p className="mt-4 text-xs text-gray-400">
-                Funds are sent directly to your wallet on the Stable Testnet.
+                Funds are sent directly to your wallet on the Base Testnet.
               </p>
             </>
           ) : (
@@ -241,9 +258,9 @@ export default function Dashboard() {
           )}
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-8 md:space-y-12">
           {/* Balances Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="card">
               <h3 className="text-sm text-gray-500 mb-1">Public Balance</h3>
               <p className="text-2xl font-mono">
@@ -267,13 +284,13 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {/* Deposit Section */}
             <div className="card">
               <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
                 Deposit
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <label className="block text-sm mb-1">Amount</label>
                   <input
@@ -309,7 +326,7 @@ export default function Dashboard() {
                   <p className="text-sm mt-1">Please deposit funds first.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm mb-1">
                       Recipient Address

@@ -23,6 +23,6 @@ body {
     @apply border border-black px-3 py-2 outline-none focus:ring-1 focus:ring-black w-full rounded-none;
   }
   .card {
-    @apply border border-black p-6;
+    @apply border border-black p-4 md:p-8;
   }
 }

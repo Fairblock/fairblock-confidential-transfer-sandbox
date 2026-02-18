@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import { useEffect, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
@@ -15,9 +17,7 @@ export interface ConfidentialConfig {
 // Standard ERC20 token contract. Any ERC20 on this chain ID can be used.
 const TOKEN_ADDRESS =
   process.env.TOKEN_ADDRESS || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-const RPC_URL =
-  process.env.ETHEREUM_RPC_URL ||
-  "https://base-sepolia.drpc.org";
+const RPC_URL = process.env.ETHEREUM_RPC_URL || "https://base-sepolia.drpc.org";
 const EXPLORER_URL =
   process.env.EXPLORER_URL || "https://sepolia.basescan.org/tx";
 const CHAIN_ID = process.env.CHAIN_ID || 84532;
@@ -28,8 +28,6 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
   explorerUrl: EXPLORER_URL,
   chainId: Number(CHAIN_ID),
 };
-
-
 
 export function useConfidentialClient() {
   const { authenticated } = usePrivy();
@@ -61,13 +59,16 @@ export function useConfidentialClient() {
         const provider = new ethers.JsonRpcProvider(config.rpcUrl);
         const tokenContract = new ethers.Contract(
           config.tokenAddress,
-          ["function symbol() view returns (string)", "function decimals() view returns (uint8)"],
-          provider
+          [
+            "function symbol() view returns (string)",
+            "function decimals() view returns (uint8)",
+          ],
+          provider,
         );
-        
+
         const [sym, dec] = await Promise.all([
           tokenContract.symbol().catch(() => "TKN"),
-          tokenContract.decimals().catch(() => 18)
+          tokenContract.decimals().catch(() => 18),
         ]);
 
         setTokenSymbol(sym);
@@ -82,10 +83,7 @@ export function useConfidentialClient() {
   // Initialize Client when config changes
   useEffect(() => {
     try {
-      const c = new ConfidentialTransferClient(
-        config.rpcUrl,
-        config.chainId
-      );
+      const c = new ConfidentialTransferClient(config.rpcUrl, config.chainId);
       setClient(c);
     } catch (err) {
       console.error("Failed to initialize client", err);
@@ -127,51 +125,65 @@ export function useConfidentialClient() {
   }, [client, signer]);
 
   // Fetch Balances
-  const fetchBalances = useCallback(async (silent: boolean = false) => {
-    if (!signer) return;
-    if (!silent) setLoading(true);
-    try {
-      const address = await signer.getAddress();
-      const provider = signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
-      
-      // Always fetch native balance
-      const nativeBal = await provider.getBalance(address);
-      
-      let publicBal = BigInt(0);
-      let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
+  const fetchBalances = useCallback(
+    async (silent: boolean = false) => {
+      if (!signer) return;
+      if (!silent) setLoading(true);
+      try {
+        const address = await signer.getAddress();
+        const provider =
+          signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
 
-      // Only fetch token balances if client and keys exist
-      if (client && userKeys) {
+        // Always fetch native balance
+        const nativeBal = await provider.getBalance(address);
+
+        let publicBal = BigInt(0);
+        let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
+
+        // Only fetch token balances if client and keys exist
+        if (client && userKeys) {
           try {
-            publicBal = await client.getPublicBalance(address, config.tokenAddress);
+            publicBal = await client.getPublicBalance(
+              address,
+              config.tokenAddress,
+            );
             const cb = await client.getConfidentialBalance(
-                address,
-                userKeys.privateKey,
-                config.tokenAddress
+              address,
+              userKeys.privateKey,
+              config.tokenAddress,
             );
             // Ensure compatibility (sdk returns amount as number or bigint, we need consistent usage)
             confidentialBal = { amount: BigInt(cb.amount) };
           } catch (e) {
-              console.warn("Failed to fetch token balances", e);
+            console.warn("Failed to fetch token balances", e);
           }
-      }
+        }
 
-      setBalances({
-        public: ethers.formatUnits(publicBal, tokenDecimals),
-        confidential: ethers.formatUnits(confidentialBal.amount, 2),
-        native: ethers.formatEther(nativeBal),
-      });
-    } catch (err) {
-      console.error("Error fetching balances:", err);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [client, signer, userKeys, config.tokenAddress, tokenDecimals, config.rpcUrl]);
+        setBalances({
+          public: ethers.formatUnits(publicBal, tokenDecimals),
+          confidential: ethers.formatUnits(confidentialBal.amount, 2),
+          native: ethers.formatEther(nativeBal),
+        });
+      } catch (err) {
+        console.error("Error fetching balances:", err);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [
+      client,
+      signer,
+      userKeys,
+      config.tokenAddress,
+      tokenDecimals,
+      config.rpcUrl,
+    ],
+  );
 
   // Polling for balances
   useEffect(() => {
     if (!signer) return;
-    
+
     // Initial fetch
     fetchBalances(true);
 
@@ -185,20 +197,20 @@ export function useConfidentialClient() {
   // Confidential Deposit
   const confidentialDeposit = useCallback(
     async (amount: string) => {
-      if (!client || !signer) throw new Error("Client or signer not initialized");
+      if (!client || !signer)
+        throw new Error("Client or signer not initialized");
       setLoading(true);
       setError(null);
       try {
-        
-        const amountWei = ethers.parseUnits(amount, 2); 
+        const amountWei = ethers.parseUnits(amount, 2);
         const receipt = await client.confidentialDeposit(
-          signer, 
-          config.tokenAddress, 
-          amountWei
+          signer,
+          config.tokenAddress,
+          amountWei,
         );
-        
-        setTimeout(fetchBalances, 2000); 
-        
+
+        setTimeout(fetchBalances, 2000);
+
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -209,13 +221,14 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress]
+    [client, signer, fetchBalances, config.tokenAddress],
   );
 
   // Confidential Transfer
   const confidentialTransfer = useCallback(
     async (recipient: string, amount: string) => {
-      if (!client || !signer) throw new Error("Client or signer not initialized");
+      if (!client || !signer)
+        throw new Error("Client or signer not initialized");
       setLoading(true);
       setError(null);
       try {
@@ -224,7 +237,7 @@ export function useConfidentialClient() {
           signer,
           recipient,
           config.tokenAddress,
-          Number(amountWei)
+          Number(amountWei),
         );
         setTimeout(fetchBalances, 2000);
         setLastTxHash(receipt.hash);
@@ -237,21 +250,22 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress]
+    [client, signer, fetchBalances, config.tokenAddress],
   );
 
   // Withdraw
   const withdraw = useCallback(
     async (amount: string) => {
-      if (!client || !signer) throw new Error("Client or signer not initialized");
+      if (!client || !signer)
+        throw new Error("Client or signer not initialized");
       setLoading(true);
       setError(null);
       try {
         const amountWei = ethers.parseUnits(amount, 2);
         const receipt = await client.withdraw(
-          signer, 
-          config.tokenAddress, 
-          Number(amountWei)
+          signer,
+          config.tokenAddress,
+          Number(amountWei),
         );
         setTimeout(fetchBalances, 2000);
         setLastTxHash(receipt.hash);
@@ -264,7 +278,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress]
+    [client, signer, fetchBalances, config.tokenAddress],
   );
 
   return {

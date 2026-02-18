@@ -1,6 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { ethers } from "ethers";
+
+function getErrorMessage(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message?: unknown }).message ?? "Unknown error");
+  }
+  return "Unknown error";
+}
 
 const FAUCET_PRIVATE_KEY = process.env.NEXT_FAUCET_PRIVATE_KEY;
 const RPC_URL = process.env.ETHEREUM_RPC_URL || "https://sepolia.base.org";
@@ -67,10 +75,10 @@ export async function POST(request: Request) {
       });
       await tokenTx.wait();
       txHashes.push(tokenTx.hash);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to send tokens:", err);
       return NextResponse.json(
-        { error: err.message || "Failed to send tokens." },
+        { error: getErrorMessage(err) || "Failed to send tokens." },
         { status: 500 },
       );
     }
@@ -110,10 +118,10 @@ export async function POST(request: Request) {
           ? "Sent 0.25 Tokens & 0.001 ETH"
           : "Sent 0.25 Tokens",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Faucet error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: getErrorMessage(error) || "Internal server error" },
       { status: 500 },
     );
   }

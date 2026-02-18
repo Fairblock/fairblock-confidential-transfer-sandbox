@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
 import { useState } from "react";
@@ -73,7 +71,7 @@ export default function Dashboard() {
       setDepositAmount("");
       setTransferAmount("");
       setWithdrawAmount("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err); // Log full error for debugging
       const errorMessage = parseError(err);
       toast.error(`${actionName} Failed`, {
@@ -119,7 +117,7 @@ export default function Dashboard() {
       // Retry fetching after a few seconds to allow for indexing
       setTimeout(fetchBalances, 3000);
       setTimeout(fetchBalances, 6000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = parseError(err);
       toast.error("Faucet Failed", {
         id: toastId,

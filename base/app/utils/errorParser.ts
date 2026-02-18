@@ -1,9 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export function parseError(error: any): string {
+export function parseError(error: unknown): string {
   if (!error) return "An unknown error occurred.";
 
   const errorMessage =
-    typeof error === "string" ? error : error.message || JSON.stringify(error);
+    typeof error === "string"
+      ? error
+      : error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+          ? String(
+              (error as { message?: unknown }).message ?? JSON.stringify(error),
+            )
+          : JSON.stringify(error);
 
   // User Rejected
   if (

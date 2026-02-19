@@ -18,6 +18,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
       config={{
         loginMethods: ['email', 'wallet'],
+        embeddedWallets: {
+          ethereum: {
+            createOnLogin: 'all-users',
+          },
+        },
         appearance: {
           theme: 'light',
           accentColor: '#000000',

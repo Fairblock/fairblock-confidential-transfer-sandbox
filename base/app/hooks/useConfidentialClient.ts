@@ -14,7 +14,6 @@ export interface ConfidentialConfig {
   chainId: number;
 }
 
-// Standard ERC20 token contract. Any ERC20 on this chain ID can be used.
 const TOKEN_ADDRESS =
   process.env.TOKEN_ADDRESS || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const RPC_URL = process.env.ETHEREUM_RPC_URL || "https://base-sepolia.drpc.org";
@@ -50,12 +49,10 @@ export function useConfidentialClient() {
   const [tokenDecimals, setTokenDecimals] = useState(18);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
-  // Fetch Token Details
   useEffect(() => {
     async function fetchTokenDetails() {
       if (!config.tokenAddress || !config.rpcUrl) return;
       try {
-        // Simple provider just for reading token details
         const provider = new ethers.JsonRpcProvider(config.rpcUrl);
         const tokenContract = new ethers.Contract(
           config.tokenAddress,
@@ -80,7 +77,6 @@ export function useConfidentialClient() {
     fetchTokenDetails();
   }, [config.tokenAddress, config.rpcUrl]);
 
-  // Initialize Client when config changes
   useEffect(() => {
     try {
       const c = new ConfidentialTransferClient(config.rpcUrl, config.chainId);
@@ -90,11 +86,10 @@ export function useConfidentialClient() {
     }
   }, [config.rpcUrl, config.chainId]);
 
-  // Get Ethers Signer from Privy Wallet
   useEffect(() => {
     async function getSigner() {
       if (authenticated && wallets.length > 0) {
-        const wallet = wallets[0]; // Use first wallet
+        const wallet = wallets[0];
         await wallet.switchChain(config.chainId);
         const provider = await wallet.getEthereumProvider();
         const ethereProvider = new ethers.BrowserProvider(provider);
@@ -105,7 +100,6 @@ export function useConfidentialClient() {
     getSigner();
   }, [authenticated, wallets]);
 
-  // Ensure Account (Create/Retrieve Keys)
   const ensureAccount = useCallback(async () => {
     if (!client || !signer) return;
     setLoading(true);
@@ -124,7 +118,6 @@ export function useConfidentialClient() {
     }
   }, [client, signer]);
 
-  // Fetch Balances
   const fetchBalances = useCallback(
     async (silent: boolean = false) => {
       if (!signer) return;
@@ -134,13 +127,11 @@ export function useConfidentialClient() {
         const provider =
           signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
 
-        // Always fetch native balance
         const nativeBal = await provider.getBalance(address);
 
         let publicBal = BigInt(0);
         let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
 
-        // Only fetch token balances if client and keys exist
         if (client && userKeys) {
           try {
             publicBal = await client.getPublicBalance(
@@ -152,7 +143,6 @@ export function useConfidentialClient() {
               userKeys.privateKey,
               config.tokenAddress,
             );
-            // Ensure compatibility (sdk returns amount as number or bigint, we need consistent usage)
             confidentialBal = { amount: BigInt(cb.amount) };
           } catch (e) {
             console.warn("Failed to fetch token balances", e);
@@ -180,21 +170,18 @@ export function useConfidentialClient() {
     ],
   );
 
-  // Polling for balances
   useEffect(() => {
     if (!signer) return;
 
-    // Initial fetch
     fetchBalances(true);
 
     const interval = setInterval(() => {
       fetchBalances(true);
-    }, 10000); // Poll every 10 seconds for faster updates
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [fetchBalances, signer]);
 
-  // Confidential Deposit
   const confidentialDeposit = useCallback(
     async (amount: string) => {
       if (!client || !signer)
@@ -224,7 +211,6 @@ export function useConfidentialClient() {
     [client, signer, fetchBalances, config.tokenAddress],
   );
 
-  // Confidential Transfer
   const confidentialTransfer = useCallback(
     async (recipient: string, amount: string) => {
       if (!client || !signer)
@@ -253,7 +239,6 @@ export function useConfidentialClient() {
     [client, signer, fetchBalances, config.tokenAddress],
   );
 
-  // Withdraw
   const withdraw = useCallback(
     async (amount: string) => {
       if (!client || !signer)

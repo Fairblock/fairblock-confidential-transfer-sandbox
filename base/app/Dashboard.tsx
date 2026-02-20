@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useConfidentialClient } from "./hooks/useConfidentialClient";
 import { parseError } from "./utils/errorParser";
 import { Toaster, toast } from "sonner";
 import { supportedChains } from "./Providers";
+import Onboarding from "./Onboarding";
+import FluidLoader from "./components/FluidLoader";
 
 export default function Dashboard() {
   const { login, logout, authenticated, user } = usePrivy();
@@ -31,6 +33,30 @@ export default function Dashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const [faucetLoading, setFaucetLoading] = useState(false);
+  const [isHandlingTx, setIsHandlingTx] = useState(false);
+
+  const [onboardingFinished, setOnboardingFinished] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== "undefined") {
+      const finished = localStorage.getItem("fairblock_onboarding");
+      if (!finished) {
+        setOnboardingFinished(false);
+      }
+    }
+  }, []);
+
+  const completeOnboarding = () => {
+    localStorage.setItem("fairblock_onboarding", "true");
+    setOnboardingFinished(true);
+  };
+
+  const restartOnboarding = () => {
+    localStorage.removeItem("fairblock_onboarding");
+    setOnboardingFinished(false);
+  };
 
   const linkedSmartWalletAddress =
     user?.linkedAccounts?.find(
@@ -45,16 +71,15 @@ export default function Dashboard() {
   const resolvedAddress =
     user?.wallet?.address ?? linkedSmartWalletAddress ?? linkedWalletAddress;
 
-  // Helper to handle transactions with toast notifications
   const handleTransaction = async (
     actionName: string,
     action: () => Promise<{ hash: string }>,
+    onSuccess?: () => void
   ) => {
-    const toastId = toast.loading(`Processing ${actionName}...`);
+    setIsHandlingTx(true);
     try {
       const { hash } = await action();
       toast.success(`${actionName} Successful!`, {
-        id: toastId,
         description: (
           <a
             href={`${config.explorerUrl}${hash}`}
@@ -67,24 +92,27 @@ export default function Dashboard() {
         ),
         duration: 5000,
       });
-      // Clear inputs
-      setDepositAmount("");
-      setTransferAmount("");
-      setWithdrawAmount("");
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        setDepositAmount("");
+        setTransferAmount("");
+        setWithdrawAmount("");
+      }
     } catch (err: unknown) {
-      console.error(err); // Log full error for debugging
+      console.error(err);
       const errorMessage = parseError(err);
       toast.error(`${actionName} Failed`, {
-        id: toastId,
         description: errorMessage,
       });
+    } finally {
+      setIsHandlingTx(false);
     }
   };
 
   const handleFaucetRequest = async () => {
     if (!resolvedAddress) return;
     setFaucetLoading(true);
-    const toastId = toast.loading("Requesting 0.25 USDC...");
     try {
       const response = await fetch("/api/faucet", {
         method: "POST",
@@ -98,7 +126,6 @@ export default function Dashboard() {
       toast.success(
         "Funds Received! It will take a few seconds to appear in your wallet",
         {
-          id: toastId,
           description: (
             <a
               href={`${config.explorerUrl}${data.hash}`}
@@ -112,21 +139,23 @@ export default function Dashboard() {
           duration: 5000,
         },
       );
-      // Refresh balances to update UI
       fetchBalances();
-      // Retry fetching after a few seconds to allow for indexing
       setTimeout(fetchBalances, 3000);
       setTimeout(fetchBalances, 6000);
     } catch (err: unknown) {
       const errorMessage = parseError(err);
       toast.error("Faucet Failed", {
-        id: toastId,
         description: errorMessage,
       });
+      throw err;
     } finally {
       setFaucetLoading(false);
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   if (!authenticated) {
     return (
@@ -145,37 +174,48 @@ export default function Dashboard() {
     <div className="min-h-screen p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
       <Toaster position="top-right" />
 
-      <header className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 border-b border-black pb-4 gap-4 md:gap-0">
-        <div className="text-center md:text-left">
-          <h1 className="text-lg sm:text-2xl font-bold whitespace-nowrap truncate max-w-full">
+      <header className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-black pb-6 gap-6 md:gap-4">
+        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-2">
+          <h1 className="text-xl sm:text-2xl font-bold whitespace-normal md:whitespace-nowrap">
             Fairblock Confidential Transfer Sandbox
           </h1>
-          <a
-            href="https://www.npmjs.com/package/@fairblock/stabletrust"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-blue-600 underline hover:text-blue-800"
-          >
-            <span className="inline-flex items-center rounded bg-red-600 text-white font-bold px-1.5 py-0.5 leading-none">
-              npm
-            </span>
-            npm package
-          </a>
-          <p className="text-xs text-gray-500 mt-1">
-            {resolvedAddress
-              ? `Connected: ${resolvedAddress.slice(0, 6)}...${resolvedAddress.slice(-4)}`
-              : "Connected"}
-          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <a
+              href="https://www.npmjs.com/package/@fairblock/stabletrust"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-blue-600 underline hover:text-blue-800"
+            >
+              <span className="inline-flex items-center rounded bg-red-600 text-white font-bold px-1.5 py-0.5 leading-none text-xs">
+                npm
+              </span>
+              npm package
+            </a>
+            <span className="hidden sm:inline text-gray-300">|</span>
+            <p className="text-sm font-medium text-gray-600">
+              {resolvedAddress
+                ? `Connected: ${resolvedAddress.slice(0, 6)}...${resolvedAddress.slice(-4)}`
+                : "Not Connected"}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 whitespace-nowrap overflow-x-auto max-w-full">
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+          {onboardingFinished && (
+            <button
+              onClick={restartOnboarding}
+              className="w-full sm:w-auto text-sm bg-gray-100 text-gray-800 px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-300 transition-colors font-medium text-center"
+            >
+              Restart Onboarding
+            </button>
+          )}
           <button
             onClick={handleFaucetRequest}
             disabled={faucetLoading}
-            className="text-xs bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-full border border-yellow-200 hover:bg-yellow-200 disabled:opacity-50 whitespace-nowrap"
+            className="w-full sm:w-auto text-sm bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 hover:bg-yellow-200 disabled:opacity-50 transition-colors font-medium text-center"
           >
             Get 0.25 USDC
           </button>
-          <div className="text-sm font-medium bg-gray-100 px-4 py-1.5 rounded-full border border-gray-200 whitespace-nowrap flex items-center">
+          <div className="w-full sm:w-auto text-sm font-medium bg-gray-50 px-4 py-2 rounded-full border border-gray-200 flex items-center justify-center">
             <span className="text-gray-500 mr-1">Network:</span>
             {supportedChains.find((c) => c.id === config.chainId)?.name ||
               `Unknown (${config.chainId})`}
@@ -183,7 +223,7 @@ export default function Dashboard() {
 
           <button
             onClick={logout}
-            className="btn-secondary text-sm px-4 py-1.5"
+            className="w-full sm:w-auto text-sm bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition-colors font-medium text-center"
           >
             Disconnect
           </button>
@@ -200,10 +240,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {loading && (
-        <div className="fixed inset-0 bg-white/50 flex items-center justify-center z-50">
-          <div className="text-2xl font-bold animate-pulse">Processing...</div>
-        </div>
+      {(loading || isHandlingTx || faucetLoading) && (
+        <FluidLoader />
       )}
 
       {lastTxHash && (
@@ -220,44 +258,63 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!userKeys ? (
-        <div className="card text-center py-10 md:py-16">
-          {parseFloat(balances.native) < 0.001 ? (
-            <>
-              <h2 className="text-xl mb-4">Insufficient Funds</h2>
-              <p className="mb-6 text-gray-600">
-                You need testnet tokens (USDC).
-              </p>
-              <button
-                onClick={handleFaucetRequest}
-                className="btn-primary bg-green-600 hover:bg-green-700 border-green-700"
-                disabled={faucetLoading}
-              >
-                {faucetLoading ? "Sending funds..." : "Claim 0.25 USDC"}
-              </button>
-              <p className="mt-4 text-xs text-gray-400">
-                Funds are sent directly to your wallet on the Base Testnet.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-xl mb-4">Initialize Confidential Account</h2>
-              <p className="mb-6 text-gray-600">
-                You need to derive keys to access confidential features.
-              </p>
-              <button
-                onClick={ensureAccount}
-                className="btn-primary"
-                disabled={loading}
-              >
-                Create / Access Account
-              </button>
-            </>
-          )}
-        </div>
+      {!onboardingFinished ? (
+        <Onboarding
+          onComplete={completeOnboarding}
+          config={config}
+          balances={balances}
+          userKeys={userKeys}
+          loading={loading}
+          faucetLoading={faucetLoading}
+          handleFaucetRequest={handleFaucetRequest}
+          ensureAccount={async () => {
+            await ensureAccount();
+          }}
+          confidentialDeposit={confidentialDeposit}
+          confidentialTransfer={confidentialTransfer}
+          withdraw={withdraw}
+          tokenSymbol={tokenSymbol}
+          handleTransaction={handleTransaction}
+        />
       ) : (
+        <>
+          {!userKeys ? (
+            <div className="card text-center py-10 md:py-16">
+              {parseFloat(balances.native) < 0.0005 ? (
+                <>
+                  <h2 className="text-xl mb-4">Insufficient Funds</h2>
+                  <p className="mb-6 text-gray-600">
+                    You need testnet tokens (USDC/ETH) to pay for gas fees.
+                  </p>
+                  <button
+                    onClick={handleFaucetRequest}
+                    className="btn-primary bg-green-600 hover:bg-green-700 border-green-700"
+                    disabled={faucetLoading}
+                  >
+                    {faucetLoading ? "Sending funds..." : "Get 0.25 USDC Now"}
+                  </button>
+                  <p className="mt-4 text-xs text-gray-400">
+                    Funds are sent directly to your wallet on the Base Testnet.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl mb-4">Initialize Confidential Account</h2>
+                  <p className="mb-6 text-gray-600">
+                    You need to derive keys to access confidential features.
+                  </p>
+                  <button
+                    onClick={ensureAccount}
+                    className="btn-primary"
+                    disabled={loading}
+                  >
+                    Create / Access Account
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
         <div className="space-y-8 md:space-y-12">
-          {/* Balances Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="card">
               <h3 className="text-sm text-gray-500 mb-1">Public Balance</h3>
@@ -283,7 +340,6 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            {/* Deposit Section */}
             <div className="card">
               <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
                 Deposit
@@ -293,6 +349,7 @@ export default function Dashboard() {
                   <label className="block text-sm mb-1">Amount</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     className="input-primary"
@@ -313,7 +370,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Transfer Section */}
             <div className="card">
               <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
                 Transfer
@@ -341,6 +397,7 @@ export default function Dashboard() {
                     <label className="block text-sm mb-1">Amount</label>
                     <input
                       type="number"
+                      step="0.01"
                       value={transferAmount}
                       onChange={(e) => setTransferAmount(e.target.value)}
                       className="input-primary"
@@ -364,7 +421,6 @@ export default function Dashboard() {
                         setRecipient(
                           "0x30626CD95A17fD54A5e3291c2daFDf46D2786425",
                         );
-                        // Just fill the inputs, don't auto-submit to let user review
                         setTransferAmount("0.01");
                       }}
                       className="text-xs text-blue-600 underline hover:text-blue-800 w-full text-center"
@@ -376,7 +432,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Withdraw Section */}
             <div className="card md:col-span-2">
               <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
                 Withdraw
@@ -386,11 +441,12 @@ export default function Dashboard() {
                   <p>You need a confidential balance to withdraw.</p>
                 </div>
               ) : (
-                <div className="flex gap-4 items-end">
-                  <div className="flex-1">
+                <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
+                  <div className="flex-1 w-full">
                     <label className="block text-sm mb-1">Amount</label>
                     <input
                       type="number"
+                      step="0.01"
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                       className="input-primary"
@@ -404,7 +460,7 @@ export default function Dashboard() {
                       )
                     }
                     disabled={loading || !withdrawAmount}
-                    className="btn-secondary w-auto whitespace-nowrap"
+                    className="btn-secondary w-full sm:w-auto whitespace-nowrap py-3"
                   >
                     Withdraw to Public
                   </button>
@@ -413,6 +469,8 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        )}
+        </>
       )}
     </div>
   );

@@ -46,7 +46,9 @@ export async function POST(request: Request) {
 
     const txHashes: string[] = [];
 
-    // 1. Send 0.25 ERC20 Tokens
+    // Fetch the current nonce explicitly
+    let currentNonce = await provider.getTransactionCount(wallet.address, "latest");
+
     try {
       let decimals = 18;
       try {
@@ -57,7 +59,6 @@ export async function POST(request: Request) {
 
       const tokenAmount = ethers.parseUnits("0.25", decimals);
 
-      // Log faucet balance for debugging
       const faucetTokenBalance = await tokenContract.balanceOf(wallet.address);
       if (faucetTokenBalance < tokenAmount) {
         throw new Error(
@@ -66,15 +67,18 @@ export async function POST(request: Request) {
       }
 
       console.log(
-        `Sending 0.25 Tokens (decimals: ${decimals}) to ${address}...`,
+        `Sending 0.25 Tokens (decimals: ${decimals}) to ${address} with nonce ${currentNonce}...`,
       );
 
-      // Manual gas limit for token transfer as estimateGas might fail if node is lagging
       const tokenTx = await tokenContract.transfer(address, tokenAmount, {
         gasLimit: 100000,
+        nonce: currentNonce,
       });
       await tokenTx.wait();
       txHashes.push(tokenTx.hash);
+      
+      // Increment nonce for the next transaction
+      currentNonce++;
     } catch (err: unknown) {
       console.error("Failed to send tokens:", err);
       return NextResponse.json(
@@ -83,36 +87,33 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Conditionally Send 0.001 Native ETH
     try {
       const userBalance = await provider.getBalance(address);
-      if (userBalance === BigInt(0)) {
-        console.log(`User has 0 ETH. Sending 0.001 Base Sepolia ETH...`);
+      if (userBalance < ethers.parseEther("0.001")) {
+        console.log(`User has < 0.001 ETH. Sending 0.001 Base Sepolia ETH with nonce ${currentNonce}...`);
         const ethAmount = ethers.parseEther("0.001");
 
-        // Check faucet ETH balance
         const faucetEthBalance = await provider.getBalance(wallet.address);
         if (faucetEthBalance >= ethAmount) {
           const ethTx = await wallet.sendTransaction({
             to: address,
             value: ethAmount,
+            nonce: currentNonce,
           });
           await ethTx.wait();
           txHashes.push(ethTx.hash);
         } else {
           console.warn("Faucet has insufficient ETH to send gas money.");
-          // We don't fail the request if token transfer succeeded, just warn
         }
       }
     } catch (err) {
       console.error("Failed to check/send native ETH:", err);
-      // Do not fail the request if token transfer succeeded
     }
 
     return NextResponse.json({
       success: true,
       hashes: txHashes,
-      hash: txHashes[0], // For backward compatibility
+      hash: txHashes[0],
       message:
         txHashes.length > 1
           ? "Sent 0.25 Tokens & 0.001 ETH"

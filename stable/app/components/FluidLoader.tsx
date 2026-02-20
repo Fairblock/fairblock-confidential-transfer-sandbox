@@ -1,19 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 // Common tailwind animation classes combined with some inline styles for the morphing effect
-const defaultMessages = [
-  "Encrypting your transaction...",
-  "Bribing miners...",
-  "Calculating zero-knowledge proofs...",
-  "Securing the confidential layer...",
-  "Summoning the cryptographers..."
-];
+const defaultMessages = ["Encrypting your transaction..."];
 
 interface FluidLoaderProps {
   messages?: string[];
 }
 
-export default function FluidLoader({ messages = defaultMessages }: FluidLoaderProps) {
+export default function FluidLoader({
+  messages = defaultMessages,
+}: FluidLoaderProps) {
   const [messageIndex, setMessageIndex] = useState(0);
 
   useEffect(() => {
@@ -45,7 +41,7 @@ export default function FluidLoader({ messages = defaultMessages }: FluidLoaderP
             }
           `}</style>
           <div className="fluid-blob absolute inset-0 bg-black opacity-90 transition-all duration-700 ease-in-out"></div>
-          
+
           {/* Inner pulsating dot */}
           <div className="absolute w-4 h-4 bg-white rounded-full animate-pulse transition-all"></div>
         </div>

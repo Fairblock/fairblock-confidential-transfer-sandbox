@@ -1,32 +1,63 @@
 import React, { useState, useEffect } from "react";
 
-// Common tailwind animation classes combined with some inline styles for the morphing effect
-const defaultMessages = ["Encrypting your transaction..."];
+const allMessages = [
+  "Encrypting",
+  "Deciphering",
+  "Transacting",
+  "Verifying",
+  "Reconciling",
+  "Securing",
+  "Authorizing",
+  "Transmuting",
+  "Balancing",
+  "Hatching",
+  "Unfurling",
+  "Stewing",
+  "Cloaking",
+  "Forging",
+  "Settling",
+];
+
+const actionMessageMap: Record<string, string[]> = {
+  Deposit: ["Encrypting", "Cloaking", "Securing", "Forging"],
+  Transfer: ["Transacting", "Authorizing", "Settling", "Transmuting"],
+  Withdraw: ["Deciphering", "Unfurling", "Reconciling", "Balancing"],
+  Faucet: ["Hatching", "Stewing", "Transacting", "Settling"],
+  Init: ["Authorizing", "Securing", "Verifying", "Forging"],
+};
+
+export type LoaderAction =
+  | "Deposit"
+  | "Transfer"
+  | "Withdraw"
+  | "Faucet"
+  | "Init"
+  | "Default";
 
 interface FluidLoaderProps {
-  messages?: string[];
+  action?: LoaderAction;
 }
 
-export default function FluidLoader({
-  messages = defaultMessages,
-}: FluidLoaderProps) {
+export default function FluidLoader({ action = "Default" }: FluidLoaderProps) {
   const [messageIndex, setMessageIndex] = useState(0);
+
+  const messages =
+    action !== "Default" && actionMessageMap[action]
+      ? actionMessageMap[action].map((m) => `${m} your transaction...`)
+      : allMessages.map((m) => `${m} your transaction...`);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % messages.length);
-    }, 3000); // Change message every 3 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [messages.length]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/80 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-8 px-4 text-center">
-        {/* Fluid Blob Animation Container */}
         <div className="relative flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32">
-          {/* We use inline styles here for custom border-radius animations to simulate fluid, 
-              as complex bezier curved border-radius animations are difficult purely through standard Tailwind utility classes */}
           <style>{`
             @keyframes morph {
               0%, 100% {
@@ -41,12 +72,9 @@ export default function FluidLoader({
             }
           `}</style>
           <div className="fluid-blob absolute inset-0 bg-black opacity-90 transition-all duration-700 ease-in-out"></div>
-
-          {/* Inner pulsating dot */}
           <div className="absolute w-4 h-4 bg-white rounded-full animate-pulse transition-all"></div>
         </div>
 
-        {/* Message Container */}
         <div className="h-12 flex items-center justify-center">
           <p
             key={messageIndex}

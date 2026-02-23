@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useConfidentialClient } from "./hooks/useConfidentialClient";
-import { parseError } from "./utils/errorParser";
+import { AppError, parseError } from "./utils/errorParser";
 import { Toaster, toast } from "sonner";
 import { supportedChains } from "./Providers";
 import Onboarding from "./Onboarding";
-import FluidLoader from "./components/FluidLoader";
+import FluidLoader, { LoaderAction } from "./components/FluidLoader";
 
 export default function Dashboard() {
   const { login, logout, authenticated, user } = usePrivy();
@@ -36,6 +34,7 @@ export default function Dashboard() {
 
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [isHandlingTx, setIsHandlingTx] = useState(false);
+  const [loaderAction, setLoaderAction] = useState<LoaderAction>("Default");
 
   const [onboardingFinished, setOnboardingFinished] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -73,12 +72,12 @@ export default function Dashboard() {
   const resolvedAddress =
     user?.wallet?.address ?? linkedSmartWalletAddress ?? linkedWalletAddress;
 
-  // Helper to handle transactions
   const handleTransaction = async (
     actionName: string,
     action: () => Promise<{ hash: string }>,
-    onSuccess?: () => void
+    onSuccess?: () => void,
   ) => {
+    setLoaderAction(actionName as LoaderAction);
     setIsHandlingTx(true);
     try {
       const { hash } = await action();
@@ -98,14 +97,13 @@ export default function Dashboard() {
       if (onSuccess) {
         onSuccess();
       } else {
-        // Clear inputs
         setDepositAmount("");
         setTransferAmount("");
         setWithdrawAmount("");
       }
-    } catch (err: unknown) {
-      console.error(err); // Log full error for debugging
-      const errorMessage = parseError(err);
+    } catch (err) {
+      console.error(err);
+      const errorMessage = parseError(err as AppError);
       toast.error(`${actionName} Failed`, {
         description: errorMessage,
       });
@@ -116,6 +114,7 @@ export default function Dashboard() {
 
   const handleFaucetRequest = async () => {
     if (!resolvedAddress) return;
+    setLoaderAction("Faucet");
     setFaucetLoading(true);
     try {
       const response = await fetch("/api/faucet", {
@@ -143,13 +142,11 @@ export default function Dashboard() {
           duration: 5000,
         },
       );
-      // Refresh balances to update UI
-      fetchBalances();
-      // Retry fetching after a few seconds to allow for indexing
-      setTimeout(fetchBalances, 3000);
-      setTimeout(fetchBalances, 6000);
+      fetchBalances(true);
+      setTimeout(() => fetchBalances(true), 3000);
+      setTimeout(() => fetchBalances(true), 6000);
     } catch (err: unknown) {
-      const errorMessage = parseError(err);
+      const errorMessage = parseError(err as AppError);
       toast.error("Faucet Failed", {
         description: errorMessage,
       });
@@ -169,7 +166,10 @@ export default function Dashboard() {
         <h1 className="text-2xl sm:text-4xl font-bold mb-8 whitespace-nowrap truncate max-w-full px-4 text-center">
           Fairblock Confidential Transfer Sandbox
         </h1>
-        <button onClick={login} className="btn-primary text-xl px-8 py-4">
+        <button
+          onClick={login}
+          className="btn-primary text-xl px-8 py-4 cursor-pointer"
+        >
           Connect Wallet
         </button>
       </div>
@@ -205,11 +205,11 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto cursor-pointer">
           {onboardingFinished && (
             <button
               onClick={restartOnboarding}
-              className="w-full sm:w-auto text-sm bg-gray-100 text-gray-800 px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-300 transition-colors font-medium text-center"
+              className="w-full sm:w-auto text-sm bg-gray-100 text-gray-800 px-4 py-2 rounded-full border border-gray-200 hover:bg-gray-300 transition-colors font-medium text-center cursor-pointer"
             >
               Restart Onboarding
             </button>
@@ -217,9 +217,9 @@ export default function Dashboard() {
           <button
             onClick={handleFaucetRequest}
             disabled={faucetLoading}
-            className="w-full sm:w-auto text-sm bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 hover:bg-yellow-200 disabled:opacity-50 transition-colors font-medium text-center"
+            className="w-full sm:w-auto text-sm bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 hover:bg-yellow-200 disabled:opacity-50 transition-colors font-medium text-center cursor-pointer"
           >
-            Get 0.25 USDT0
+            Get 0.25 USDC
           </button>
           <div className="w-full sm:w-auto text-sm font-medium bg-gray-50 px-4 py-2 rounded-full border border-gray-200 flex items-center justify-center">
             <span className="text-gray-500 mr-1">Network:</span>
@@ -229,7 +229,7 @@ export default function Dashboard() {
 
           <button
             onClick={logout}
-            className="w-full sm:w-auto text-sm bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition-colors font-medium text-center"
+            className="w-full sm:w-auto text-sm bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition-colors font-medium text-center cursor-pointer"
           >
             Disconnect
           </button>
@@ -247,7 +247,7 @@ export default function Dashboard() {
       )}
 
       {(loading || isHandlingTx || faucetLoading) && (
-        <FluidLoader />
+        <FluidLoader action={loaderAction} />
       )}
 
       {lastTxHash && (
@@ -274,6 +274,7 @@ export default function Dashboard() {
           faucetLoading={faucetLoading}
           handleFaucetRequest={handleFaucetRequest}
           ensureAccount={async () => {
+            setLoaderAction("Init");
             await ensureAccount();
           }}
           confidentialDeposit={confidentialDeposit}
@@ -286,32 +287,37 @@ export default function Dashboard() {
         <>
           {!userKeys ? (
             <div className="card text-center py-10 md:py-16">
-              {parseFloat(balances.native) < 0.01 ? (
+              {parseFloat(balances.native) < 0.0005 ? (
                 <>
                   <h2 className="text-xl mb-4">Insufficient Funds</h2>
                   <p className="mb-6 text-gray-600">
-                    You need testnet tokens (USDT0/ETH) to pay for gas fees.
+                    You need testnet tokens (USDC/ETH) to pay for gas fees.
                   </p>
                   <button
                     onClick={handleFaucetRequest}
-                    className="btn-primary bg-green-600 hover:bg-green-700 border-green-700"
+                    className="btn-primary bg-green-600 hover:bg-green-700 border-green-700 cursor-pointer"
                     disabled={faucetLoading}
                   >
-                    {faucetLoading ? "Sending funds..." : "Get 0.25 USDT0 Now"}
+                    {faucetLoading ? "Sending funds..." : "Get 0.25 USDC Now"}
                   </button>
                   <p className="mt-4 text-xs text-gray-400">
-                    Funds are sent directly to your wallet on the Stable Testnet.
+                    Funds are sent directly to your wallet on the Base Testnet.
                   </p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-xl mb-4">Initialize Confidential Account</h2>
+                  <h2 className="text-xl mb-4">
+                    Initialize Confidential Account
+                  </h2>
                   <p className="mb-6 text-gray-600">
                     You need to derive keys to access confidential features.
                   </p>
                   <button
-                    onClick={ensureAccount}
-                    className="btn-primary"
+                    onClick={() => {
+                      setLoaderAction("Init");
+                      ensureAccount();
+                    }}
+                    className="btn-primary cursor-pointer"
                     disabled={loading}
                   >
                     Create / Access Account
@@ -320,167 +326,198 @@ export default function Dashboard() {
               )}
             </div>
           ) : (
-        <div className="space-y-8 md:space-y-12">
-          {/* Balances Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <div className="card">
-              <h3 className="text-sm text-gray-500 mb-1">Public Balance</h3>
-              <p className="text-2xl font-mono">
-                {balances.public} {tokenSymbol}
-              </p>
-            </div>
-            <div className="card">
-              <h3 className="text-sm text-gray-500 mb-1">
-                Confidential Balance
-              </h3>
-              <p className="text-2xl font-mono">
-                {balances.confidential} {tokenSymbol}
-              </p>
-            </div>
-            <button
-              onClick={() => fetchBalances()}
-              className="btn-secondary w-full md:col-span-2"
-              disabled={loading}
-            >
-              Refresh Balances
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            {/* Deposit Section */}
-            <div className="card">
-              <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
-                Deposit
-              </h2>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm mb-1">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    className="input-primary"
-                    placeholder="0.0"
-                  />
+            <div className="space-y-8 md:space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div className="card">
+                  <h3 className="text-sm text-gray-500 mb-1">Public Balance</h3>
+                  <p className="text-2xl font-mono">
+                    {balances.public} {tokenSymbol}
+                  </p>
+                </div>
+                <div className="card">
+                  <h3 className="text-sm text-gray-500 mb-1">
+                    Confidential Balance
+                  </h3>
+                  <p className="text-2xl font-mono">
+                    {balances.confidential} {tokenSymbol}
+                  </p>
                 </div>
                 <button
-                  onClick={() =>
-                    handleTransaction("Deposit", () =>
-                      confidentialDeposit(depositAmount),
-                    )
-                  }
-                  disabled={loading || !depositAmount}
-                  className="btn-primary w-full"
+                  onClick={() => fetchBalances()}
+                  className="btn-secondary w-full md:col-span-2 cursor-pointer"
+                  disabled={loading}
                 >
-                  Deposit to Confidential
+                  Refresh Balances
                 </button>
               </div>
-            </div>
 
-            {/* Transfer Section */}
-            <div className="card">
-              <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
-                Transfer
-              </h2>
-              {parseFloat(balances.confidential) <= 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>You need a confidential balance to transfer.</p>
-                  <p className="text-sm mt-1">Please deposit funds first.</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm mb-1">
-                      Recipient Address
-                    </label>
-                    <input
-                      type="text"
-                      value={recipient}
-                      onChange={(e) => setRecipient(e.target.value)}
-                      className="input-primary"
-                      placeholder="0x..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1">Amount</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={transferAmount}
-                      onChange={(e) => setTransferAmount(e.target.value)}
-                      className="input-primary"
-                      placeholder="0.0"
-                    />
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleTransaction("Transfer", () =>
-                        confidentialTransfer(recipient, transferAmount),
-                      )
-                    }
-                    disabled={loading || !transferAmount || !recipient}
-                    className="btn-primary w-full"
-                  >
-                    Transfer Confidentially
-                  </button>
-                  <div className="pt-2 border-t border-gray-200 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div className="card">
+                  <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
+                    Deposit
+                  </h2>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm mb-1">Amount</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={depositAmount}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (Number(val) < 0) return;
+                          setDepositAmount(val);
+                        }}
+                        min="0"
+                        className="input-primary"
+                        placeholder="0.0"
+                      />
+                    </div>
                     <button
-                      onClick={() => {
-                        setRecipient(
-                          "0x30626CD95A17fD54A5e3291c2daFDf46D2786425",
-                        );
-                        // Just fill the inputs, don't auto-submit to let user review
-                        setTransferAmount("0.01");
-                      }}
-                      className="text-xs text-blue-600 underline hover:text-blue-800 w-full text-center"
+                      onClick={() =>
+                        handleTransaction("Deposit", () =>
+                          confidentialDeposit(depositAmount),
+                        )
+                      }
+                      disabled={
+                        loading ||
+                        !depositAmount ||
+                        Number(depositAmount) > Number(balances.public)
+                      }
+                      className="btn-primary w-full cursor-pointer"
                     >
-                      Fill Demo Transfer (0.01 to Alice)
+                      Deposit to Confidential
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Withdraw Section */}
-            <div className="card md:col-span-2">
-              <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
-                Withdraw
-              </h2>
-              {parseFloat(balances.confidential) <= 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  <p>You need a confidential balance to withdraw.</p>
+                <div className="card">
+                  <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
+                    Transfer
+                  </h2>
+                  {parseFloat(balances.confidential) <= 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>You need a confidential balance to transfer.</p>
+                      <p className="text-sm mt-1">
+                        Please deposit funds first.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm mb-1">
+                          Recipient Address
+                        </label>
+                        <div className="relative w-full">
+                          <input
+                            type="text"
+                            value={recipient}
+                            onChange={(e) => setRecipient(e.target.value)}
+                            className="input-primary"
+                            title="Transfer"
+                          />
+                          {!recipient && (
+                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                              Enter receiver address or use our{" "}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRecipient(
+                                    "0x30626CD95A17fD54A5e3291c2daFDf46D2786425",
+                                  );
+                                  setTransferAmount("0.01");
+                                }}
+                                className="text-[#0084ff] hover:underline ml-1 pointer-events-auto cursor-pointer"
+                              >
+                                demo account
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Amount</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={transferAmount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (Number(val) < 0) return;
+                            setTransferAmount(val);
+                          }}
+                          min="0"
+                          className="input-primary"
+                          placeholder="0.0"
+                        />
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleTransaction("Transfer", () =>
+                            confidentialTransfer(recipient, transferAmount),
+                          )
+                        }
+                        disabled={
+                          loading ||
+                          !transferAmount ||
+                          !recipient ||
+                          Number(transferAmount) > Number(balances.confidential)
+                        }
+                        className="btn-primary w-full cursor-pointer"
+                      >
+                        Confidential Transfer
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
-                  <div className="flex-1 w-full">
-                    <label className="block text-sm mb-1">Amount</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
-                      className="input-primary"
-                      placeholder="0.0"
-                    />
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleTransaction("Withdraw", () =>
-                        withdraw(withdrawAmount),
-                      )
-                    }
-                    disabled={loading || !withdrawAmount}
-                    className="btn-secondary w-full sm:w-auto whitespace-nowrap py-3"
-                  >
-                    Withdraw to Public
-                  </button>
+
+                <div className="card md:col-span-2">
+                  <h2 className="text-lg font-bold mb-4 border-b border-black pb-2">
+                    Withdraw
+                  </h2>
+                  {parseFloat(balances.confidential) <= 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>You need a confidential balance to withdraw.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm mb-1">Amount</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={withdrawAmount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (Number(val) < 0) return;
+                            setWithdrawAmount(val);
+                          }}
+                          min="0"
+                          className="input-primary"
+                          placeholder="0.0"
+                        />
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleTransaction("Withdraw", () =>
+                            withdraw(withdrawAmount),
+                          )
+                        }
+                        disabled={
+                          loading ||
+                          !withdrawAmount ||
+                          Number(withdrawAmount) > Number(balances.confidential)
+                        }
+                        className="btn-secondary w-full sm:w-auto whitespace-nowrap py-3 cursor-pointer"
+                      >
+                        Withdraw to Public
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
-        )}
+          )}
         </>
       )}
     </div>

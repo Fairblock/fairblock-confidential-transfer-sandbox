@@ -1,4 +1,13 @@
-export function parseError(error: unknown): string {
+export interface TransactionError {
+  message?: string;
+  code?: number | string;
+  reason?: string;
+  data?: Record<string, string | number | boolean | object | null>;
+}
+
+export type AppError = Error | TransactionError | string | null;
+
+export function parseError(error: AppError): string {
   if (!error) return "An unknown error occurred.";
 
   const errorMessage =
@@ -6,10 +15,9 @@ export function parseError(error: unknown): string {
       ? error
       : error instanceof Error
         ? error.message
-        : typeof error === "object" && error !== null && "message" in error
-          ? String(
-              (error as { message?: unknown }).message ?? JSON.stringify(error),
-            )
+        : typeof error === "object" &&
+            typeof (error as TransactionError).message === "string"
+          ? String((error as TransactionError).message)
           : JSON.stringify(error);
 
   if (

@@ -1,11 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import { useEffect, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { ConfidentialTransferClient } from "@fairblock/stabletrust";
-import { parseError } from "../utils/errorParser";
+import { parseError, AppError } from "../utils/errorParser";
 
 export interface ConfidentialConfig {
   rpcUrl: string;
@@ -31,7 +28,7 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
 export function useConfidentialClient() {
   const { authenticated } = usePrivy();
   const { wallets } = useWallets();
-  const [config, setConfig] = useState<ConfidentialConfig>(DEFAULT_CONFIG);
+  const [config] = useState<ConfidentialConfig>(DEFAULT_CONFIG);
   const [client, setClient] = useState<ConfidentialTransferClient | null>(null);
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [userKeys, setUserKeys] = useState<{
@@ -98,7 +95,7 @@ export function useConfidentialClient() {
       }
     }
     getSigner();
-  }, [authenticated, wallets]);
+  }, [authenticated, wallets, config.chainId]);
 
   const ensureAccount = useCallback(async () => {
     if (!client || !signer) return;
@@ -109,7 +106,7 @@ export function useConfidentialClient() {
       setUserKeys(keys);
       return keys;
     } catch (err) {
-      const errorMessage = parseError(err);
+      const errorMessage = parseError(err as AppError);
       setError(errorMessage);
       console.error(err);
       throw err;
@@ -132,12 +129,19 @@ export function useConfidentialClient() {
         let publicBal = BigInt(0);
         let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
 
-        if (client && userKeys) {
+        if (client) {
           try {
             publicBal = await client.getPublicBalance(
               address,
               config.tokenAddress,
             );
+          } catch (e) {
+            console.warn("Failed to fetch public balance", e);
+          }
+        }
+
+        if (client && userKeys) {
+          try {
             const cb = await client.getConfidentialBalance(
               address,
               userKeys.privateKey,
@@ -145,7 +149,7 @@ export function useConfidentialClient() {
             );
             confidentialBal = { amount: BigInt(cb.amount) };
           } catch (e) {
-            console.warn("Failed to fetch token balances", e);
+            console.warn("Failed to fetch confidential balance", e);
           }
         }
 
@@ -196,12 +200,12 @@ export function useConfidentialClient() {
           amountWei,
         );
 
-        setTimeout(fetchBalances, 2000);
+        setTimeout(() => fetchBalances(true), 2000);
 
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
-        const errorMessage = parseError(err);
+        const errorMessage = parseError(err as AppError);
         setError(errorMessage);
         throw err;
       } finally {
@@ -225,11 +229,11 @@ export function useConfidentialClient() {
           config.tokenAddress,
           Number(amountWei),
         );
-        setTimeout(fetchBalances, 2000);
+        setTimeout(() => fetchBalances(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
-        const errorMessage = parseError(err);
+        const errorMessage = parseError(err as AppError);
         setError(errorMessage);
         throw err;
       } finally {
@@ -252,11 +256,11 @@ export function useConfidentialClient() {
           config.tokenAddress,
           Number(amountWei),
         );
-        setTimeout(fetchBalances, 2000);
+        setTimeout(() => fetchBalances(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
-        const errorMessage = parseError(err);
+        const errorMessage = parseError(err as AppError);
         setError(errorMessage);
         throw err;
       } finally {

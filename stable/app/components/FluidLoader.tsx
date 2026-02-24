@@ -16,14 +16,30 @@ const allMessages = [
   "Cloaking",
   "Forging",
   "Settling",
+].map((m) => `${m} your transaction...`);
+
+const zkFlowMessages = [
+  "Encrypting...",
+  "Generating proof...",
+  "Verifying proof...",
+  "Communicating with stable...",
 ];
 
 const actionMessageMap: Record<string, string[]> = {
-  Deposit: ["Encrypting", "Cloaking", "Securing", "Forging"],
-  Transfer: ["Transacting", "Authorizing", "Settling", "Transmuting"],
-  Withdraw: ["Deciphering", "Unfurling", "Reconciling", "Balancing"],
-  Faucet: ["Hatching", "Stewing", "Transacting", "Settling"],
-  Init: ["Authorizing", "Securing", "Verifying", "Forging"],
+  Deposit: [
+    "Approving tokens...",
+    "Depositing...",
+    "Communicating with stable...",
+  ],
+  Transfer: zkFlowMessages,
+  Withdraw: zkFlowMessages,
+  Faucet: ["Sending from the faucet wallet..."],
+  Init: [
+    "Deriving keys...",
+    "Creating account...",
+    "Communicating with stable...",
+  ],
+  Refresh: ["Fetching balance..."],
 };
 
 export type LoaderAction =
@@ -32,6 +48,7 @@ export type LoaderAction =
   | "Withdraw"
   | "Faucet"
   | "Init"
+  | "Refresh"
   | "Default";
 
 interface FluidLoaderProps {
@@ -40,19 +57,26 @@ interface FluidLoaderProps {
 
 export default function FluidLoader({ action = "Default" }: FluidLoaderProps) {
   const [messageIndex, setMessageIndex] = useState(0);
+  const [currentAction, setCurrentAction] = useState(action);
+
+  if (action !== currentAction) {
+    setCurrentAction(action);
+    setMessageIndex(0);
+  }
 
   const messages =
     action !== "Default" && actionMessageMap[action]
-      ? actionMessageMap[action].map((m) => `${m} your transaction...`)
-      : allMessages.map((m) => `${m} your transaction...`);
+      ? actionMessageMap[action]
+      : allMessages;
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % messages.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [messages.length]);
+    if (messageIndex < messages.length - 1) {
+      const timer = setTimeout(() => {
+        setMessageIndex((prev) => prev + 1);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [messageIndex, messages.length]);
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/80 backdrop-blur-sm">

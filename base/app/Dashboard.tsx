@@ -343,7 +343,10 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <button
-                  onClick={() => fetchBalances()}
+                  onClick={() => {
+                    setLoaderAction("Refresh");
+                    fetchBalances();
+                  }}
                   className="btn-secondary w-full md:col-span-2 cursor-pointer"
                   disabled={loading}
                 >

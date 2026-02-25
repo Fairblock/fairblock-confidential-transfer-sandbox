@@ -16,7 +16,7 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.testnet.stable.xyz",
   contractAddress:
     process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
-    "0x29E4fd434758b1677c10854Fa81C2fc496D76E62",
+    "0xb0b461aFA69b715d842c7fAb602f50D4cef83fe5",
   tokenAddress:
     process.env.NEXT_PUBLIC_TOKEN_ADDRESS ||
     "0x78cf24370174180738c5b8e352b6d14c83a6c9a9",

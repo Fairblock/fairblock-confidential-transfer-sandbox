@@ -143,7 +143,7 @@ export default function Onboarding({
           <div className="space-y-4">
             <h3 className="text-xl font-bold">Step 1: Claim Testnet Tokens</h3>
             <p className="text-gray-600">
-              To get started, you need some testnet tokens (USDC) to pay for
+              To get started, you need some testnet tokens (USD₮0) to pay for
               transactions and initial deposits.
             </p>
             <div className="pt-4">
@@ -152,7 +152,7 @@ export default function Onboarding({
                 disabled={faucetLoading}
                 className="btn-primary w-full py-3 cursor-pointer"
               >
-                {faucetLoading ? "Requesting..." : "Claim 0.25 USDC"}
+                {faucetLoading ? "Requesting..." : "Claim 0.25 USD₮0"}
               </button>
             </div>
             <div className="text-center pt-2">

@@ -219,7 +219,7 @@ export default function Dashboard() {
             disabled={faucetLoading}
             className="w-full sm:w-auto text-sm bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 hover:bg-yellow-200 disabled:opacity-50 transition-colors font-medium text-center cursor-pointer"
           >
-            Get 0.25 USDC
+            Get 0.25 USD₮0
           </button>
           <div className="w-full sm:w-auto text-sm font-medium bg-gray-50 px-4 py-2 rounded-full border border-gray-200 flex items-center justify-center">
             <span className="text-gray-500 mr-1">Network:</span>
@@ -291,14 +291,14 @@ export default function Dashboard() {
                 <>
                   <h2 className="text-xl mb-4">Insufficient Funds</h2>
                   <p className="mb-6 text-gray-600">
-                    You need testnet tokens (USDC/ETH) to pay for gas fees.
+                    You need testnet tokens (USD₮0) to pay for gas fees.
                   </p>
                   <button
                     onClick={handleFaucetRequest}
                     className="btn-primary bg-green-600 hover:bg-green-700 border-green-700 cursor-pointer"
                     disabled={faucetLoading}
                   >
-                    {faucetLoading ? "Sending funds..." : "Get 0.25 USDC Now"}
+                    {faucetLoading ? "Sending funds..." : "Get 0.25 USD₮0 Now"}
                   </button>
                   <p className="mt-4 text-xs text-gray-400">
                     Funds are sent directly to your wallet on the Base Testnet.

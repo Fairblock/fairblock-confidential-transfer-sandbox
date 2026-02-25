@@ -3,7 +3,8 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { ConfidentialTransferClient } from "@fairblock/stabletrust";
 import { parseError, AppError } from "../utils/errorParser";
-
+import { getRpcUrl } from "../actions/rpc";
+import { sendFaucet } from "../actions/faucet";
 export interface ConfidentialConfig {
   rpcUrl: string;
   contractAddress: string;
@@ -13,7 +14,7 @@ export interface ConfidentialConfig {
 }
 
 const DEFAULT_CONFIG: ConfidentialConfig = {
-  rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.testnet.stable.xyz",
+  rpcUrl: "https://rpc.testnet.stable.xyz",
   contractAddress:
     process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
     "0xb0b461aFA69b715d842c7fAb602f50D4cef83fe5",
@@ -25,9 +26,6 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
     "https://testnet.stablescan.xyz/tx/",
   chainId: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "2201"),
 };
-
-// const CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "2201"); // Removed in favor of config.chainId
-
 export function useConfidentialClient() {
   const { authenticated } = usePrivy();
   const { wallets } = useWallets();
@@ -49,12 +47,28 @@ export function useConfidentialClient() {
   const [tokenDecimals, setTokenDecimals] = useState(18);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
-  // Fetch Token Details
+  useEffect(() => {
+    async function initRpc() {
+      try {
+        const res = await getRpcUrl();
+        if (res.success && res.rpcUrl) {
+          setConfig((prev) => ({ ...prev, rpcUrl: res.rpcUrl }));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch RPC URL", err);
+      }
+    }
+    initRpc();
+  }, []);
+
+  useEffect(() => {
+    console.log("Config is now:", config);
+  }, [config]);
+
   useEffect(() => {
     async function fetchTokenDetails() {
       if (!config.tokenAddress || !config.rpcUrl) return;
       try {
-        // Simple provider just for reading token details
         const provider = new ethers.JsonRpcProvider(config.rpcUrl);
         const tokenContract = new ethers.Contract(
           config.tokenAddress,
@@ -79,7 +93,6 @@ export function useConfidentialClient() {
     fetchTokenDetails();
   }, [config.tokenAddress, config.rpcUrl]);
 
-  // Initialize Client when config changes
   useEffect(() => {
     try {
       const c = new ConfidentialTransferClient(
@@ -91,13 +104,12 @@ export function useConfidentialClient() {
     } catch (err) {
       console.error("Failed to initialize client", err);
     }
-  }, [config.rpcUrl, config.contractAddress]);
+  }, [config.rpcUrl, config.contractAddress, config.chainId]);
 
-  // Get Ethers Signer from Privy Wallet
   useEffect(() => {
     async function getSigner() {
       if (authenticated && wallets.length > 0) {
-        const wallet = wallets[0]; // Use first wallet
+        const wallet = wallets[0];
         await wallet.switchChain(config.chainId);
         const provider = await wallet.getEthereumProvider();
         const ethereProvider = new ethers.BrowserProvider(provider);
@@ -106,9 +118,8 @@ export function useConfidentialClient() {
       }
     }
     getSigner();
-  }, [authenticated, wallets]);
+  }, [authenticated, wallets, config.chainId]);
 
-  // Ensure Account (Create/Retrieve Keys)
   const ensureAccount = useCallback(async () => {
     if (!client || !signer) return;
     setLoading(true);
@@ -127,7 +138,6 @@ export function useConfidentialClient() {
     }
   }, [client, signer]);
 
-  // Fetch Balances
   const fetchBalances = useCallback(
     async (silent: boolean = false) => {
       if (!signer) return;
@@ -137,7 +147,6 @@ export function useConfidentialClient() {
         const provider =
           signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
 
-        // Always fetch native balance
         const nativeBal = await provider.getBalance(address);
 
         let publicBal = BigInt(0);
@@ -166,6 +175,7 @@ export function useConfidentialClient() {
             console.warn("Failed to fetch confidential balance", e);
           }
         }
+
         setBalances({
           public: ethers.formatUnits(publicBal, tokenDecimals),
           confidential: ethers.formatUnits(confidentialBal.amount, 2),
@@ -187,27 +197,25 @@ export function useConfidentialClient() {
     ],
   );
 
-  // Polling for balances
   useEffect(() => {
     if (!signer) return;
 
-    // Initial fetch
     fetchBalances(true);
 
     const interval = setInterval(() => {
       fetchBalances(true);
-    }, 10000); // Poll every 10 seconds for faster updates
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [fetchBalances, signer]);
 
-  // Confidential Deposit
   const confidentialDeposit = useCallback(
     async (amount: string) => {
       if (!client || !signer)
         throw new Error("Client or signer not initialized");
       setLoading(true);
       setError(null);
+      console.log(client);
       try {
         const amountWei = ethers.parseUnits(amount, 2);
         const receipt = await client.confidentialDeposit(
@@ -231,7 +239,6 @@ export function useConfidentialClient() {
     [client, signer, fetchBalances, config.tokenAddress],
   );
 
-  // Confidential Transfer
   const confidentialTransfer = useCallback(
     async (recipient: string, amount: string) => {
       if (!client || !signer)
@@ -260,7 +267,6 @@ export function useConfidentialClient() {
     [client, signer, fetchBalances, config.tokenAddress],
   );
 
-  // Withdraw
   const withdraw = useCallback(
     async (amount: string) => {
       if (!client || !signer)
@@ -288,6 +294,27 @@ export function useConfidentialClient() {
     [client, signer, fetchBalances, config.tokenAddress],
   );
 
+  const requestFaucet = useCallback(async () => {
+    if (!signer) throw new Error("Signer not initialized");
+    setLoading(true);
+    setError(null);
+    try {
+      const address = await signer.getAddress();
+      const result = await sendFaucet(address);
+      if (!result.success) {
+        throw new Error(result.error || "Faucet request failed");
+      }
+      setTimeout(() => fetchBalances(true), 2000);
+      return result;
+    } catch (err) {
+      const errorMessage = parseError(err as AppError);
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [signer, fetchBalances]);
+
   return {
     config,
 
@@ -299,6 +326,7 @@ export function useConfidentialClient() {
     error,
     ensureAccount,
     fetchBalances,
+    requestFaucet,
     confidentialDeposit,
     confidentialTransfer,
     withdraw,

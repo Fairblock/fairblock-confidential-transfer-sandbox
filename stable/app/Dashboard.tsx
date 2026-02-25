@@ -16,6 +16,7 @@ export default function Dashboard() {
 
     ensureAccount,
     fetchBalances,
+    requestFaucet,
     confidentialDeposit,
     confidentialTransfer,
     withdraw,
@@ -117,14 +118,7 @@ export default function Dashboard() {
     setLoaderAction("Faucet");
     setFaucetLoading(true);
     try {
-      const response = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: resolvedAddress }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || "Faucet request failed");
+      const data = await requestFaucet();
 
       toast.success(
         "Funds Received! It will take a few seconds to appear in your wallet",
@@ -301,7 +295,8 @@ export default function Dashboard() {
                     {faucetLoading ? "Sending funds..." : "Get 0.25 USD₮0 Now"}
                   </button>
                   <p className="mt-4 text-xs text-gray-400">
-                    Funds are sent directly to your wallet on the Base Testnet.
+                    Funds are sent directly to your wallet on the Stable
+                    Testnet.
                   </p>
                 </>
               ) : (

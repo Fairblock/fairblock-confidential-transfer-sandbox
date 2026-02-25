@@ -426,7 +426,7 @@ export default function Dashboard() {
                                 type="button"
                                 onClick={() => {
                                   setRecipient(
-                                    "0x30626CD95A17fD54A5e3291c2daFDf46D2786425",
+                                    "0xD9A6E167a149219155a1bc5480Bc9738CdDb48F7",
                                   );
                                   setTransferAmount("0.01");
                                 }}

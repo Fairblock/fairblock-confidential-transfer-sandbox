@@ -47,7 +47,7 @@ export default function Onboarding({
   const [depositAmount, setDepositAmount] = useState("0.2");
   const [transferAmount, setTransferAmount] = useState("0.1");
   const [recipient, setRecipient] = useState(
-    "0x30626CD95A17fD54A5e3291c2daFDf46D2786425",
+    "0xD9A6E167a149219155a1bc5480Bc9738CdDb48F7",
   );
   const [withdrawAmount, setWithdrawAmount] = useState("0.1");
 

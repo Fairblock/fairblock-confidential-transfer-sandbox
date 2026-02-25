@@ -16,6 +16,7 @@ export default function Dashboard() {
 
     ensureAccount,
     fetchBalances,
+    requestFaucet,
     confidentialDeposit,
     confidentialTransfer,
     withdraw,
@@ -117,14 +118,7 @@ export default function Dashboard() {
     setLoaderAction("Faucet");
     setFaucetLoading(true);
     try {
-      const response = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: resolvedAddress }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || "Faucet request failed");
+      const data = await requestFaucet();
 
       toast.success(
         "Funds Received! It will take a few seconds to appear in your wallet",
@@ -291,7 +285,7 @@ export default function Dashboard() {
                 <>
                   <h2 className="text-xl mb-4">Insufficient Funds</h2>
                   <p className="mb-6 text-gray-600">
-                    You need testnet tokens (USDC/ETH) to pay for gas fees.
+                    You need testnet tokens (USDC) to pay for gas fees.
                   </p>
                   <button
                     onClick={handleFaucetRequest}

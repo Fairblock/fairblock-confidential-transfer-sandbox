@@ -364,6 +364,7 @@ export default function Dashboard() {
                         onChange={(e) => {
                           const val = e.target.value;
                           if (Number(val) < 0) return;
+                          if (!/^\d*\.?\d{0,2}$/.test(val)) return;
                           setDepositAmount(val);
                         }}
                         min="0"
@@ -442,6 +443,7 @@ export default function Dashboard() {
                           onChange={(e) => {
                             const val = e.target.value;
                             if (Number(val) < 0) return;
+                            if (!/^\d*\.?\d{0,2}$/.test(val)) return;
                             setTransferAmount(val);
                           }}
                           min="0"
@@ -488,6 +490,7 @@ export default function Dashboard() {
                           onChange={(e) => {
                             const val = e.target.value;
                             if (Number(val) < 0) return;
+                            if (!/^\d*\.?\d{0,2}$/.test(val)) return;
                             setWithdrawAmount(val);
                           }}
                           min="0"

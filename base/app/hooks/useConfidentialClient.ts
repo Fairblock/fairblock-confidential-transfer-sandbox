@@ -21,8 +21,12 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
   tokenAddress:
     process.env.NEXT_PUBLIC_TOKEN_ADDRESS ||
     "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-  explorerUrl:
-    process.env.NEXT_PUBLIC_EXPLORER_URL || "https://sepolia.basescan.org/tx",
+  explorerUrl: (() => {
+    const url =
+      process.env.NEXT_PUBLIC_EXPLORER_URL ||
+      "https://sepolia.basescan.org/tx/";
+    return url.endsWith("/") ? url : `${url}/`;
+  })(),
   chainId: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "84532"),
 };
 export function useConfidentialClient() {
@@ -177,7 +181,10 @@ export function useConfidentialClient() {
 
         setBalances({
           public: ethers.formatUnits(publicBal, tokenDecimals),
-          confidential: ethers.formatUnits(confidentialBal.amount, 2),
+          confidential: ethers.formatUnits(
+            confidentialBal.amount,
+            tokenDecimals,
+          ),
           native: ethers.formatEther(nativeBal),
         });
       } catch (err) {
@@ -216,7 +223,7 @@ export function useConfidentialClient() {
       setError(null);
       console.log(client);
       try {
-        const amountWei = ethers.parseUnits(amount, 2);
+        const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.confidentialDeposit(
           signer,
           config.tokenAddress,
@@ -245,7 +252,7 @@ export function useConfidentialClient() {
       setLoading(true);
       setError(null);
       try {
-        const amountWei = ethers.parseUnits(amount, 2);
+        const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.confidentialTransfer(
           signer,
           recipient,
@@ -273,7 +280,7 @@ export function useConfidentialClient() {
       setLoading(true);
       setError(null);
       try {
-        const amountWei = ethers.parseUnits(amount, 2);
+        const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.withdraw(
           signer,
           config.tokenAddress,

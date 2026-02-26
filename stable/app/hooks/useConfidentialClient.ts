@@ -178,7 +178,10 @@ export function useConfidentialClient() {
 
         setBalances({
           public: ethers.formatUnits(publicBal, tokenDecimals),
-          confidential: ethers.formatUnits(confidentialBal.amount, 2),
+          confidential: ethers.formatUnits(
+            confidentialBal.amount,
+            tokenDecimals,
+          ),
           native: ethers.formatEther(nativeBal),
         });
       } catch (err) {
@@ -217,7 +220,7 @@ export function useConfidentialClient() {
       setError(null);
       console.log(client);
       try {
-        const amountWei = ethers.parseUnits(amount, 2);
+        const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.confidentialDeposit(
           signer,
           config.tokenAddress,
@@ -246,7 +249,7 @@ export function useConfidentialClient() {
       setLoading(true);
       setError(null);
       try {
-        const amountWei = ethers.parseUnits(amount, 2);
+        const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.confidentialTransfer(
           signer,
           recipient,
@@ -274,7 +277,7 @@ export function useConfidentialClient() {
       setLoading(true);
       setError(null);
       try {
-        const amountWei = ethers.parseUnits(amount, 2);
+        const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.withdraw(
           signer,
           config.tokenAddress,

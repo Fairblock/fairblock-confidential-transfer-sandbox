@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
   chainId: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "2201"),
 };
 export function useConfidentialClient() {
-  const { authenticated } = usePrivy();
+  const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
   const [config, setConfig] = useState<ConfidentialConfig>(DEFAULT_CONFIG);
   const [client, setClient] = useState<ConfidentialTransferClient | null>(null);
@@ -62,7 +62,7 @@ export function useConfidentialClient() {
   }, []);
 
   useEffect(() => {
-    console.log("Config is now:", config);
+    console.log("Config is set with contract:", config.contractAddress);
   }, [config]);
 
   useEffect(() => {
@@ -109,16 +109,51 @@ export function useConfidentialClient() {
   useEffect(() => {
     async function getSigner() {
       if (authenticated && wallets.length > 0) {
-        const wallet = wallets[0];
-        await wallet.switchChain(config.chainId);
-        const provider = await wallet.getEthereumProvider();
-        const ethereProvider = new ethers.BrowserProvider(provider);
-        const s = await ethereProvider.getSigner();
-        setSigner(s);
+        let wallet = wallets[0];
+
+        if (user) {
+          const linkedSmartWalletAddress = user.linkedAccounts?.find(
+            (account) =>
+              account.type === "smart_wallet" && "address" in account,
+          )?.address;
+          const linkedWalletAddress = user.linkedAccounts?.find(
+            (account) => account.type === "wallet" && "address" in account,
+          )?.address;
+          const resolvedAddress =
+            user.wallet?.address ??
+            linkedSmartWalletAddress ??
+            linkedWalletAddress;
+
+          if (resolvedAddress) {
+            const matchingWallet = wallets.find(
+              (w) => w.address.toLowerCase() === resolvedAddress.toLowerCase(),
+            );
+            if (matchingWallet) {
+              wallet = matchingWallet;
+            } else {
+              console.log("Waiting for matching wallet");
+              return;
+            }
+          }
+        }
+
+        try {
+          await wallet.switchChain(config.chainId);
+          const provider = await wallet.getEthereumProvider();
+          const ethereProvider = new ethers.BrowserProvider(provider);
+          const s = await ethereProvider.getSigner();
+          setSigner(s);
+        } catch (err) {
+          console.error("Failed to set signer:", err);
+        }
+      } else {
+        setSigner(null);
+        setUserKeys(null);
+        setBalances({ public: "0", confidential: "0", native: "0" });
       }
     }
     getSigner();
-  }, [authenticated, wallets, config.chainId]);
+  }, [authenticated, wallets, config.chainId, user]);
 
   const ensureAccount = useCallback(async () => {
     if (!client || !signer) return;
@@ -218,7 +253,6 @@ export function useConfidentialClient() {
         throw new Error("Client or signer not initialized");
       setLoading(true);
       setError(null);
-      console.log(client);
       try {
         const amountWei = ethers.parseUnits(amount, tokenDecimals);
         const receipt = await client.confidentialDeposit(

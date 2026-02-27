@@ -7,7 +7,6 @@ import { getRpcUrl } from "../actions/rpc";
 import { sendFaucet } from "../actions/faucet";
 export interface ConfidentialConfig {
   rpcUrl: string;
-  contractAddress: string;
   tokenAddress: string;
   explorerUrl: string;
   chainId: number;
@@ -15,9 +14,6 @@ export interface ConfidentialConfig {
 
 const DEFAULT_CONFIG: ConfidentialConfig = {
   rpcUrl: "https://base-sepolia.drpc.org",
-  contractAddress:
-    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
-    "0x1a06530765e942a1D26B74d9558e9a1EdA615867",
   tokenAddress:
     process.env.NEXT_PUBLIC_TOKEN_ADDRESS ||
     "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
@@ -61,10 +57,7 @@ export function useConfidentialClient() {
   }, []);
 
   useEffect(() => {
-    console.log(
-      "Config is now set with contract address:",
-      config.contractAddress,
-    );
+    console.log("Config is now set for chainId:", config.chainId);
   }, [config]);
 
   useEffect(() => {
@@ -97,16 +90,12 @@ export function useConfidentialClient() {
 
   useEffect(() => {
     try {
-      const c = new ConfidentialTransferClient(
-        config.rpcUrl,
-        config.contractAddress,
-        config.chainId,
-      );
+      const c = new ConfidentialTransferClient(config.rpcUrl, config.chainId);
       setClient(c);
     } catch (err) {
       console.error("Failed to initialize client", err);
     }
-  }, [config.rpcUrl, config.contractAddress, config.chainId]);
+  }, [config.rpcUrl, config.chainId]);
 
   useEffect(() => {
     async function getSigner() {

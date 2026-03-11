@@ -10,15 +10,18 @@ export type AppError = Error | TransactionError | string | null;
 export function parseError(error: AppError): string {
   if (!error) return "An unknown error occurred.";
 
+  const stringified =
+    typeof error === "object" &&
+    typeof (error as TransactionError).message === "string"
+      ? String((error as TransactionError).message)
+      : JSON.stringify(error);
+
   const errorMessage =
     typeof error === "string"
       ? error
       : error instanceof Error
         ? error.message
-        : typeof error === "object" &&
-            typeof (error as TransactionError).message === "string"
-          ? String((error as TransactionError).message)
-          : JSON.stringify(error);
+        : stringified === "{}" ? "An unknown error occurred." : stringified;
 
   if (
     errorMessage.includes("User rejected") ||

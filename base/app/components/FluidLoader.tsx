@@ -22,14 +22,14 @@ const zkFlowMessages = [
   "Encrypting...",
   "Generating proof...",
   "Verifying proof...",
-  "Communicating with base...",
+  "Communicating with Base...",
 ];
 
 const actionMessageMap: Record<string, string[]> = {
   Deposit: [
     "Approving tokens...",
     "Depositing...",
-    "Communicating with base...",
+    "Communicating with Base...",
   ],
   Transfer: zkFlowMessages,
   Withdraw: zkFlowMessages,
@@ -37,7 +37,7 @@ const actionMessageMap: Record<string, string[]> = {
   Init: [
     "Deriving keys...",
     "Creating account...",
-    "Communicating with base...",
+    "Communicating with Base...",
   ],
   Refresh: ["Fetching balance..."],
 };

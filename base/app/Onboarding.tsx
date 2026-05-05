@@ -257,7 +257,7 @@ export default function Onboarding({
           <div className="space-y-4">
             <h3 className="text-xl font-bold">Step 4: Confidential Transfer</h3>
             <p className="text-gray-600">
-              Send your confidential tokens to another address. On-chain
+              Send your confidential tokens to another address. Onchain
               observers wont see the encrypted amount transferred.
             </p>
             <div>

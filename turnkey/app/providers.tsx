@@ -50,8 +50,8 @@ export function Providers({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem
+      defaultTheme="light"
+      enableSystem={false}
       disableTransitionOnChange
     >
       <TurnkeyProvider

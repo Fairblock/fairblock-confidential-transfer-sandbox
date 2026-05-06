@@ -34,9 +34,9 @@ export async function initializeWasm(input) {
           process.versions.node != null;
 
         if (isNode) {
-          const fs = await import("fs");
-          const path = await import("path");
-          const { fileURLToPath } = await import("url");
+          const fs = await import(/* webpackIgnore: true */ "node:fs");
+          const path = await import(/* webpackIgnore: true */ "node:path");
+          const { fileURLToPath } = await import(/* webpackIgnore: true */ "node:url");
           const __filename = fileURLToPath(import.meta.url);
           const __dirname = path.dirname(__filename);
           const wasmPath = path.resolve(

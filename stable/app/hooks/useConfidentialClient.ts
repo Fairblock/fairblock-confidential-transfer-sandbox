@@ -20,7 +20,7 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
   explorerUrl:
     process.env.NEXT_PUBLIC_EXPLORER_URL ||
     "https://testnet.stablescan.xyz/tx/",
-  chainId: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "2201"),
+  chainId: Number.parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "2201"),
 };
 export function useConfidentialClient() {
   const { authenticated, user } = usePrivy();
@@ -35,7 +35,6 @@ export function useConfidentialClient() {
   const [balances, setBalances] = useState({
     public: "0",
     confidential: "0",
-    native: "0",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,13 +103,12 @@ export function useConfidentialClient() {
         let wallet = wallets[0];
 
         if (user) {
-          const linkedSmartWalletAddress = user.linkedAccounts?.find(
-            (account) =>
-              account.type === "smart_wallet" && "address" in account,
-          )?.address;
-          const linkedWalletAddress = user.linkedAccounts?.find(
-            (account) => account.type === "wallet" && "address" in account,
-          )?.address;
+          const linkedSmartWalletAddress = (user.linkedAccounts?.find(
+            (account: { type: string }) => account.type === "smart_wallet",
+          ) as { address?: string } | undefined)?.address;
+          const linkedWalletAddress = (user.linkedAccounts?.find(
+            (account: { type: string }) => account.type === "wallet",
+          ) as { address?: string } | undefined)?.address;
           const resolvedAddress =
             user.wallet?.address ??
             linkedSmartWalletAddress ??
@@ -141,7 +139,7 @@ export function useConfidentialClient() {
       } else {
         setSigner(null);
         setUserKeys(null);
-        setBalances({ public: "0", confidential: "0", native: "0" });
+        setBalances({ public: "0", confidential: "0" });
       }
     }
     getSigner();
@@ -173,8 +171,6 @@ export function useConfidentialClient() {
         const address = await signer.getAddress();
         const provider =
           signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
-
-        const nativeBal = await provider.getBalance(address);
 
         let publicBal = BigInt(0);
         let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
@@ -209,7 +205,6 @@ export function useConfidentialClient() {
             confidentialBal.amount,
             tokenDecimals,
           ),
-          native: ethers.formatEther(nativeBal),
         });
       } catch (err) {
         console.error("Error fetching balances:", err);
@@ -265,7 +260,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress],
+    [client, signer, fetchBalances, config.tokenAddress, tokenDecimals],
   );
 
   const confidentialTransfer = useCallback(
@@ -293,7 +288,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress],
+    [client, signer, fetchBalances, config.tokenAddress, tokenDecimals],
   );
 
   const withdraw = useCallback(
@@ -320,7 +315,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress],
+    [client, signer, fetchBalances, config.tokenAddress, tokenDecimals],
   );
 
   const requestFaucet = useCallback(async () => {

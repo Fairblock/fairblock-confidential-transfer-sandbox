@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@turnkey/react-wallet-kit/styles.css";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -11,10 +11,9 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"], 
   variable: "--font-instrument-serif" 
 });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Fairblock Confidential Transfer Sandbox",
+  title: "Fairblock Confidential Assets & Payments",
   description: "Secure Turnkey embedded wallet experience",
 };
 
@@ -29,7 +28,6 @@ export default function RootLayout({
       className={cn(
         inter.variable,
         instrumentSerif.variable,
-        jetbrainsMono.variable,
         "font-sans"
       )}
       suppressHydrationWarning

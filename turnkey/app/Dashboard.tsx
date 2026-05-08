@@ -174,7 +174,7 @@ export default function Dashboard() {
       {/* Mobile Top Bar */}
       <header className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div className="font-serif font-bold text-[#0F172A] text-lg">
-          Fairblock <span className="text-[#1E4FD6] italic">Sandbox</span>
+          Fairblock <span className="text-[#1E4FD6] italic">Assets & Payments</span>
         </div>
         <button onClick={() => logout()} title="Logout" className="text-slate-400 hover:text-red-500 transition-colors">
           <LogOut className="w-5 h-5" />
@@ -185,13 +185,13 @@ export default function Dashboard() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-x-hidden">
         
         {/* Left Sidebar - Identity & Navigation */}
-        <aside className="lg:col-span-3 bg-white border-r border-slate-200 p-6 md:p-8 flex flex-col justify-between lg:h-screen lg:sticky lg:top-0 overflow-y-auto">
+        <aside className="lg:col-span-4 bg-white border-r border-slate-200 p-6 md:p-10 flex flex-col justify-between lg:h-screen lg:sticky lg:top-0 overflow-y-auto">
           <div className="space-y-10">
             {/* Branding */}
             <div className="space-y-1">
               <h1 className="text-2xl font-serif font-bold text-[#0F172A]">
-                Confidential Transfer <br />
-                <span className="text-[#1E4FD6] italic text-3xl">Sandbox.</span>
+                Confidential Assets <br />
+                <span className="text-[#1E4FD6] italic text-3xl">& Payments.</span>
               </h1>
               <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
                 By Fairblock X Turnkey
@@ -236,13 +236,16 @@ export default function Dashboard() {
               <div className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
                 Network
               </div>
-              <div className="flex items-center justify-between p-4 border border-slate-100">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 p-4 border border-slate-100">
+                <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
                   <div className="glow-dot" />
                   <span className="text-xs font-mono uppercase tracking-wider text-slate-600">
                     {supportedChains.find((c) => c.id === config.chainId)?.name || "Base Sepolia"}
                   </span>
                 </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                  We also support all chains on EVM, Stellar, and Solana.
+                </p>
               </div>
             </div>
 
@@ -284,8 +287,8 @@ export default function Dashboard() {
         </aside>
 
         {/* Middle Column - Main Action Area */}
-        <main className="lg:col-span-6 p-6 md:p-12 lg:h-screen overflow-y-auto">
-          <div className="max-w-2xl mx-auto space-y-10">
+        <main className="lg:col-span-5 p-6 md:p-10 lg:h-screen overflow-y-auto">
+          <div className="space-y-10">
             
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-700 px-6 py-4 flex items-center justify-between">
@@ -440,6 +443,7 @@ export default function Dashboard() {
                 )}
               </div>
             )}
+
           </div>
         </main>
 
@@ -451,13 +455,13 @@ export default function Dashboard() {
               Account Assets
             </div>
             <div className="space-y-1">
-              <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1">
+              <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1 shadow-sm">
                 <h3 className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Public Balance</h3>
                 <div className="text-2xl font-serif text-[#0F172A]">
                   {balances.public} <span className="text-xs font-sans text-slate-400">{tokenSymbol}</span>
                 </div>
               </div>
-              <div className="p-6 border border-[#1E4FD6]/20 bg-[#1E4FD6]/5 space-y-1">
+              <div className="p-6 border border-[#1E4FD6]/20 bg-[#1E4FD6]/5 space-y-1 shadow-sm">
                 <h3 className="text-[10px] text-[#1E4FD6] uppercase tracking-widest font-bold italic">Confidential Balance</h3>
                 <div className="text-2xl font-serif text-[#0F172A]">
                   {balances.confidential} <span className="text-xs font-sans text-slate-400">{tokenSymbol}</span>
@@ -482,7 +486,7 @@ export default function Dashboard() {
               Activity Log
             </div>
             {lastTxHash ? (
-              <div className="p-6 border border-slate-100 bg-green-50/30 space-y-4">
+              <div className="p-6 border border-slate-100 bg-green-50/30 space-y-4 shadow-sm">
                 <div className="flex items-center gap-2 text-green-600">
                   <Check className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">Confirmed</span>
@@ -530,7 +534,7 @@ export default function Dashboard() {
                 href="https://docs.fairblock.network"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center justify-between p-5 border border-slate-200 text-[#0F172A] hover:border-[#1E4FD6] transition-all"
+                className="group flex items-center justify-between p-5 border border-slate-200 text-[#0F172A] hover:border-[#1E4FD6] transition-all bg-white"
               >
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#1E4FD6]">Developer Docs</span>
                 <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-[#1E4FD6] transition-all" />

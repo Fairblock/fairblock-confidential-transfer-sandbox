@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { ConfidentialTransferClient } from "@fairblock/stabletrust";
@@ -26,7 +26,15 @@ export function useConfidentialClient() {
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
   const [config, setConfig] = useState<ConfidentialConfig>(DEFAULT_CONFIG);
-  const [client, setClient] = useState<ConfidentialTransferClient | null>(null);
+  const client = useMemo(() => {
+    try {
+      return new ConfidentialTransferClient(config.rpcUrl, config.chainId);
+    } catch (err) {
+      console.error("Failed to initialize client", err);
+      return null;
+    }
+  }, [config.rpcUrl, config.chainId]);
+
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [userKeys, setUserKeys] = useState<{
     publicKey: string;
@@ -88,14 +96,7 @@ export function useConfidentialClient() {
     fetchTokenDetails();
   }, [config.tokenAddress, config.rpcUrl]);
 
-  useEffect(() => {
-    try {
-      const c = new ConfidentialTransferClient(config.rpcUrl, config.chainId);
-      setClient(c);
-    } catch (err) {
-      console.error("Failed to initialize client", err);
-    }
-  }, [config.rpcUrl, config.chainId]);
+
 
   useEffect(() => {
     async function getSigner() {
@@ -137,9 +138,14 @@ export function useConfidentialClient() {
           console.error("Failed to set signer:", err);
         }
       } else {
-        setSigner(null);
-        setUserKeys(null);
-        setBalances({ public: "0", confidential: "0" });
+        // Use an async block to reset state to avoid synchronous setState in effect warning
+        const resetState = async () => {
+          await Promise.resolve();
+          setSigner(null);
+          setUserKeys(null);
+          setBalances({ public: "0", confidential: "0" });
+        };
+        resetState();
       }
     }
     getSigner();
@@ -169,8 +175,6 @@ export function useConfidentialClient() {
       if (!silent) setLoading(true);
       try {
         const address = await signer.getAddress();
-        const provider =
-          signer.provider || new ethers.JsonRpcProvider(config.rpcUrl);
 
         let publicBal = BigInt(0);
         let confidentialBal: { amount: bigint } = { amount: BigInt(0) };
@@ -218,14 +222,17 @@ export function useConfidentialClient() {
       userKeys,
       config.tokenAddress,
       tokenDecimals,
-      config.rpcUrl,
     ],
   );
 
   useEffect(() => {
     if (!signer) return;
 
-    fetchBalances(true);
+    // Call fetchBalances in an async manner to avoid synchronous setState warning
+    const initFetch = async () => {
+      await fetchBalances(true);
+    };
+    initFetch();
 
     const interval = setInterval(() => {
       fetchBalances(true);

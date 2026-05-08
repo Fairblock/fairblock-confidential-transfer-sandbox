@@ -1,5 +1,5 @@
 "use client";
-import toast from "sonner";
+import { toast } from "sonner";
 
 import { ConfidentialConfig } from "./hooks/useConfidentialClient";
 import { useState } from "react";

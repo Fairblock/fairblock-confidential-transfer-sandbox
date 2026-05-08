@@ -101,7 +101,7 @@ export default function Onboarding({
   return (
     <div className="card max-w-2xl mx-auto my-8 p-6 md:p-10 border border-black shadow-none bg-white">
       <div className="flex justify-between items-center mb-6 border-b border-black pb-4">
-        <h2 className="text-2xl font-bold">Confidential Onboarding</h2>
+        <h2 className="text-2xl font-bold font-serif">Confidential Onboarding</h2>
         <button
           onClick={onComplete}
           className="text-sm underline text-gray-500 hover:text-black cursor-pointer"
@@ -112,7 +112,7 @@ export default function Onboarding({
 
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex flex-col sm:flex-row justify-between gap-4">
         <div>
-          <span className="text-xs text-gray-500 block uppercase tracking-wide">
+          <span className="text-[10px] text-gray-500 block uppercase tracking-widest font-bold">
             Public Balance
           </span>
           <span className="font-mono text-lg font-medium">
@@ -120,10 +120,10 @@ export default function Onboarding({
           </span>
         </div>
         <div>
-          <span className="text-xs text-gray-500 block uppercase tracking-wide">
+          <span className="text-[10px] text-gray-500 block uppercase tracking-widest font-bold">
             Confidential Balance
           </span>
-          <span className="font-mono text-lg font-medium">
+          <span className="font-mono text-lg font-medium text-[#1E4FD6]">
             {balances.confidential} {tokenSymbol}
           </span>
         </div>
@@ -133,7 +133,7 @@ export default function Onboarding({
         {[1, 2, 3, 4, 5, 6].map((s) => (
           <div
             key={s}
-            className={`h-2 flex-1 rounded-full ${s <= step ? "bg-black" : "bg-gray-200"}`}
+            className={`h-1 flex-1 ${s <= step ? "bg-[#1E4FD6]" : "bg-gray-200"}`}
           />
         ))}
       </div>
@@ -141,8 +141,8 @@ export default function Onboarding({
       <div className="min-h-62.5">
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">Step 1: Claim Testnet Tokens</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-bold font-serif">Step 1: Claim Testnet Tokens</h3>
+            <p className="text-gray-600 text-sm">
               To get started, you need some testnet tokens (USDC) to pay for
               transactions and initial deposits.
             </p>
@@ -168,8 +168,8 @@ export default function Onboarding({
 
         {step === 2 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">Step 2: Initialize Account</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-bold font-serif">Step 2: Initialize Account</h3>
+            <p className="text-gray-600 text-sm">
               Create or recover your confidential keys to enable confidential
               transfers. Your private balances will not unlock themselves.
             </p>
@@ -207,15 +207,15 @@ export default function Onboarding({
 
         {step === 3 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">
+            <h3 className="text-xl font-bold font-serif">
               Step 3: Deposit to Confidential
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm">
               Move public tokens into your confidential balance so you can
               transfer them privately.
             </p>
             <div>
-              <label className="block text-sm mb-1">Amount</label>
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -255,15 +255,14 @@ export default function Onboarding({
 
         {step === 4 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">Step 4: Confidential Transfer</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-bold font-serif">Step 4: Confidential Transfer</h3>
+            <p className="text-gray-600 text-sm">
               Send your confidential tokens to another address. Onchain
-              observers wont see the encrypted amount transferred.
+              observers won't see the encrypted amount transferred.
             </p>
             <div>
-              <label className="block text-sm mb-1">
-                Recipient Address(Using a default demo address for this
-                transfer.)
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">
+                Recipient Address
               </label>
               <div className="relative w-full mb-4">
                 <input
@@ -275,7 +274,7 @@ export default function Onboarding({
                   disabled
                 />
               </div>
-              <label className="block text-sm mb-1">Amount</label>
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -316,15 +315,15 @@ export default function Onboarding({
 
         {step === 5 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">
+            <h3 className="text-xl font-bold font-serif">
               Step 5: Withdraw from Confidential
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm">
               Move tokens back to your public balance anytime. This step is
               optional.
             </p>
             <div>
-              <label className="block text-sm mb-1">Amount</label>
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -372,14 +371,14 @@ export default function Onboarding({
               }}
             />
             <div className="text-6xl mb-4 relative z-10">🎉</div>
-            <h3 className="text-2xl font-bold relative z-10">
+            <h3 className="text-2xl font-bold relative z-10 font-serif">
               Congratulations!
             </h3>
             <p className="text-gray-600 text-lg relative z-10">
               Yay! You have successfully completed a confidential journey on
               Fairblock.
             </p>
-            <p className="text-gray-500 relative z-10">
+            <p className="text-gray-500 relative z-10 text-sm">
               We&apos;re just getting started! Head over to your dashboard to
               explore more.
             </p>

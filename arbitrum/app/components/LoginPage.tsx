@@ -29,16 +29,21 @@ export default function LoginPage({ login }: LoginPageProps) {
           <div className="space-y-8">
             <h1 className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-serif leading-[1.05] tracking-tight text-[#0F172A]">
               Enterprise <br />
-              <span className="italic text-[#1E4FD6] whitespace-nowrap">Privacy Solutions.</span>
+              <span className="italic text-[#1E4FD6] whitespace-nowrap">
+                Privacy Solutions.
+              </span>
             </h1>
 
             <div className="grid gap-4 max-w-lg">
               {[
                 "Institutional-grade privacy without operational complexity.",
                 "Encrypted amounts and balances by default.",
-                "No new wallets, no new trust assumptions."
+                "No new wallets, no new trust assumptions.",
               ].map((text) => (
-                <div key={text} className="p-6 border border-slate-200 bg-white/40 backdrop-blur-sm hover:border-[#1E4FD6] transition-colors group">
+                <div
+                  key={text}
+                  className="p-6 border border-slate-200 bg-white/40 backdrop-blur-sm hover:border-[#1E4FD6] transition-colors group"
+                >
                   <p className="text-base text-slate-600 font-sans leading-relaxed group-hover:text-[#0F172A]">
                     {text}
                   </p>
@@ -46,7 +51,6 @@ export default function LoginPage({ login }: LoginPageProps) {
               ))}
             </div>
           </div>
-
         </div>
       </div>
 
@@ -55,14 +59,14 @@ export default function LoginPage({ login }: LoginPageProps) {
         <div className="w-full max-w-lg space-y-12">
           <div className="space-y-4 text-center md:text-left">
             <h2 className="text-4xl font-serif text-[#0F172A]">
-              Enter Sandbox
+              Try Confidentiality
             </h2>
             <p className="text-slate-500 font-sans leading-relaxed">
-              Access your secure{" "}
+              Experience{" "}
               <span className="text-[#1E4FD6] font-medium">
-                Privy wallet
+                confidential assets and payments
               </span>{" "}
-              to manage your private assets with hardware-backed security.
+              see exactly what onchain privacy looks like in practice.
             </p>
           </div>
 
@@ -72,32 +76,22 @@ export default function LoginPage({ login }: LoginPageProps) {
               className="w-full group relative flex items-center justify-center gap-4 bg-[#1E4FD6] text-white py-6 px-10 hover:bg-[#0F36A8] transition-all duration-300 shadow-[0_20px_40px_-15px_rgba(30,79,214,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(30,79,214,0.4)]"
             >
               <span className="font-sans font-bold tracking-widest uppercase text-sm">
-                Authenticate Wallet to Access Sandbox
+                Access Sandbox
               </span>
               <div className="absolute right-8 opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowUpRight className="w-5 h-5" />
               </div>
             </button>
-
-            <div className="relative flex items-center py-4">
-              <div className="grow border-t border-slate-100"></div>
-              <span className="shrink mx-4 text-[10px] text-slate-300 uppercase tracking-[0.2em] font-bold">
-                Secure Access
-              </span>
-              <div className="grow border-t border-slate-100"></div>
-            </div>
           </div>
 
-          {/* Ecosystem Collaboration */}
+          {/* Become a Partner */}
           <div className="pt-8 border-t border-slate-100 space-y-6">
             <div className="space-y-2 text-center md:text-left">
-              <h3 className="text-xl font-serif text-[#0F172A]">
-                Ecosystem Collaboration
+              <h3 className="text-4xl font-serif text-[#0F172A]">
+                Become a Partner
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Fairblock is building the privacy layer for the decentralized
-                future. Explore our deep integrations with industry-leading
-                infrastructure partners.
+                Add confidential assets and payments to your product. Minimal integration, no infrastructure to run, and compliance built in from the start.
               </p>
             </div>
             <a
@@ -107,7 +101,7 @@ export default function LoginPage({ login }: LoginPageProps) {
               className="w-full group relative flex items-center justify-center gap-4 border border-slate-200 bg-[#F8FAFC] py-6 px-10 hover:border-[#1E4FD6] transition-all duration-300"
             >
               <span className="font-sans font-bold tracking-widest uppercase text-sm text-[#0F172A] group-hover:text-[#1E4FD6]">
-                Explore Ecosystem and Partner Network
+                Explore Integration and Partnership Paths
               </span>
               <div className="absolute right-8 opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowUpRight className="w-5 h-5 text-[#1E4FD6]" />

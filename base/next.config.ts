@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
       fs: false,
       path: false,
       url: false,
+      "@farcaster/mini-app-solana": false,
+    };
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@farcaster/mini-app-solana": false,
     };
     return config;
   },

@@ -374,7 +374,16 @@ export default function Dashboard() {
                         </div>
                         <div className="space-y-4">
                           <div>
-                            <label htmlFor="recipient-address" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Recipient Address</label>
+                            <div className="flex items-center justify-between mb-2">
+                              <label htmlFor="recipient-address" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Recipient Address</label>
+                              <button
+                                type="button"
+                                onClick={() => setRecipient("0x30626CD95A17fD54A5e3291c2daFDf46D2786425")}
+                                className="text-[10px] text-[#1E4FD6] hover:underline font-mono"
+                              >
+                                Use demo account
+                              </button>
+                            </div>
                             <input
                               id="recipient-address"
                               type="text"

@@ -233,7 +233,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
                   <div className="glow-dot" />
                   <span className="text-xs font-mono uppercase tracking-wider text-slate-600">
-                    {supportedChains.find((c) => c.id === config.chainId)?.name || "Stable Testnet"}
+                    {supportedChains.find((c) => c.id === config.chainId)?.name || "Base Sepolia"}
                   </span>
                 </div>
               </div>
@@ -366,7 +366,16 @@ export default function Dashboard() {
                         </div>
                         <div className="space-y-4">
                           <div>
-                            <label htmlFor="recipient-address" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Recipient Address</label>
+                            <div className="flex items-center justify-between mb-2">
+                              <label htmlFor="recipient-address" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Recipient Address</label>
+                              <button
+                                type="button"
+                                onClick={() => setRecipient("0x30626CD95A17fD54A5e3291c2daFDf46D2786425")}
+                                className="text-[10px] text-[#1E4FD6] hover:underline font-mono"
+                              >
+                                Use demo account
+                              </button>
+                            </div>
                             <input
                               id="recipient-address"
                               type="text"

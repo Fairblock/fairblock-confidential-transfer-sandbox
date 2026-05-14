@@ -99,8 +99,8 @@ export default function Onboarding({
   };
 
   return (
-    <div className="card max-w-2xl mx-auto my-8 p-6 md:p-10 border border-black shadow-none bg-white">
-      <div className="flex justify-between items-center mb-6 border-b border-black pb-4">
+    <div className="card max-w-2xl mx-auto my-8 p-6 md:p-10 border border-slate-200 shadow-none bg-white">
+      <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
         <h2 className="text-2xl font-bold">Confidential Onboarding</h2>
         <button
           onClick={onComplete}

@@ -15,12 +15,12 @@ export default function LoginPage({ login }: LoginPageProps) {
         <div className="space-y-12">
           {/* Logos */}
           <div className="flex items-center gap-6">
-            <div className="relative w-12 h-12 overflow-hidden border border-black bg-white">
+            <div className="relative w-48 h-16 overflow-hidden">
               <Image
-                src="/fairblock.jpeg"
+                src="/logo.png"
                 alt="Fairblock"
                 fill
-                className="object-cover"
+                className="object-contain"
               />
             </div>
           </div>

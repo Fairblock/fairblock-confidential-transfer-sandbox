@@ -62,11 +62,13 @@ export default function LoginPage({ login }: LoginPageProps) {
               Try Confidentiality
             </h2>
             <p className="text-slate-500 font-sans leading-relaxed">
-              Experience{" "}
+              Explore{" "}
               <span className="text-[#1E4FD6] font-medium">
                 confidential assets and payments
               </span>{" "}
-              see exactly what onchain privacy looks like in practice.
+              through an interactive walkthrough. The user experience remains
+              fully seamless after integration, while this sandbox demonstrates
+              how confidentiality works under the hood.
             </p>
           </div>
 
@@ -91,7 +93,9 @@ export default function LoginPage({ login }: LoginPageProps) {
                 Become a Partner
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Add confidential assets and payments to your product. Minimal integration, no infrastructure to run, and compliance built in from the start.
+                Integrate confidential assets and payments into your product
+                with no protocol changes, no infrastructure overhead, and
+                compliance built in from day one.
               </p>
             </div>
             <a

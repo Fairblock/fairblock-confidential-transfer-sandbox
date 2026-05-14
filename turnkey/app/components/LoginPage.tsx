@@ -71,11 +71,11 @@ export default function LoginPage({ login }: LoginPageProps) {
               Try Confidentiality
             </h2>
             <p className="text-slate-500 font-sans leading-relaxed">
-              Access your non-custodial{" "}
-              <span className="text-[#1E4FD6] font-medium">
-                Turnkey embedded wallet
-              </span>{" "}
-              via secure email login for hardware-backed private asset management.
+              Explore confidential assets and payments through an interactive
+              sandbox powered by Turnkey embedded wallets and Fairblock
+              confidentiality. Securely access your non-custodial wallet with
+              seamless email login and explore how confidential transactions
+              work under the hood.
             </p>
           </div>
 
@@ -100,7 +100,9 @@ export default function LoginPage({ login }: LoginPageProps) {
                 Become a Partner
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Add confidential assets and payments to your product. Minimal integration, no infrastructure to run, and compliance built in from the start.
+                Integrate confidential assets and payments into your product
+                with no protocol changes, no infrastructure overhead, and
+                compliance built in from day one.
               </p>
             </div>
             <a

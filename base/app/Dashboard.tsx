@@ -76,7 +76,9 @@ export default function Dashboard() {
         (account) => account.type === "wallet" && "address" in account,
       )?.address ?? null;
 
-    return user?.wallet?.address ?? linkedSmartWalletAddress ?? linkedWalletAddress;
+    return (
+      user?.wallet?.address ?? linkedSmartWalletAddress ?? linkedWalletAddress
+    );
   }, [user]);
 
   const handleTransaction = async (
@@ -167,7 +169,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#E9ECF2] grid-bg flex flex-col">
       <Toaster position="top-right" />
-      
+
       {(loading || isHandlingTx || faucetLoading) && (
         <FluidLoader action={loaderAction} />
       )}
@@ -175,16 +177,20 @@ export default function Dashboard() {
       {/* Mobile Top Bar */}
       <header className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div className="font-serif font-bold text-[#0F172A] text-lg">
-          Fairblock <span className="text-[#1E4FD6] italic">Assets & Payments</span>
+          Fairblock{" "}
+          <span className="text-[#1E4FD6] italic">Assets & Payments</span>
         </div>
-        <button onClick={() => logout()} title="Logout" className="text-slate-400 hover:text-red-500 transition-colors">
+        <button
+          onClick={() => logout()}
+          title="Logout"
+          className="text-slate-400 hover:text-red-500 transition-colors"
+        >
           <LogOut className="w-5 h-5" />
         </button>
       </header>
 
       {/* Main Layout Grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-x-hidden">
-        
         {/* Left Sidebar - Identity & Navigation */}
         <aside className="lg:col-span-4 bg-white border-r border-slate-200 p-6 md:p-10 flex flex-col justify-between lg:h-screen lg:sticky lg:top-0 overflow-y-auto">
           <div className="space-y-10">
@@ -192,7 +198,9 @@ export default function Dashboard() {
             <div className="space-y-1">
               <h1 className="text-2xl font-serif font-bold text-[#0F172A]">
                 Confidential Assets <br />
-                <span className="text-[#1E4FD6] italic text-3xl">& Payments.</span>
+                <span className="text-[#1E4FD6] italic text-3xl">
+                  & Payments.
+                </span>
               </h1>
               <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
                 By Fairblock
@@ -219,7 +227,9 @@ export default function Dashboard() {
                       {resolvedAddress}
                     </button>
                   ) : (
-                    <span className="text-xs text-slate-400 italic">Not connected</span>
+                    <span className="text-xs text-slate-400 italic">
+                      Not connected
+                    </span>
                   )}
                   {copied && <Check className="w-3 h-3 text-green-500" />}
                 </div>
@@ -241,7 +251,8 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
                   <div className="glow-dot" />
                   <span className="text-xs font-mono uppercase tracking-wider text-slate-600">
-                    {supportedChains.find((c) => c.id === config.chainId)?.name || "Base Sepolia"}
+                    {supportedChains.find((c) => c.id === config.chainId)
+                      ?.name || "Base Sepolia"}
                   </span>
                 </div>
               </div>
@@ -255,7 +266,9 @@ export default function Dashboard() {
                 className="w-full text-left p-3 text-sm font-medium hover:bg-slate-50 border-l-2 border-transparent hover:border-[#1E4FD6] transition-all flex items-center justify-between group"
               >
                 <span>Request Faucet</span>
-                <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">0.25 USDC</span>
+                <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  0.25 USDC
+                </span>
               </button>
               <button
                 onClick={restartOnboarding}
@@ -280,18 +293,24 @@ export default function Dashboard() {
             className="w-full flex items-center gap-3 p-4 text-slate-400 hover:text-red-500 transition-colors border-t border-slate-100 mt-8"
           >
             <LogOut className="w-4 h-4" />
-            <span className="text-sm font-medium uppercase tracking-widest">Disconnect</span>
+            <span className="text-sm font-medium uppercase tracking-widest">
+              Disconnect
+            </span>
           </button>
         </aside>
 
         {/* Middle Column - Main Action Area */}
         <main className="lg:col-span-5 p-6 md:p-10 lg:h-screen overflow-y-auto">
           <div className="space-y-10">
-            
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-700 px-6 py-4 flex items-center justify-between">
                 <p className="text-sm font-medium">{error}</p>
-                <button onClick={() => globalThis.location.reload()} className="text-xs underline">Dismiss</button>
+                <button
+                  onClick={() => globalThis.location.reload()}
+                  className="text-xs underline"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
 
@@ -319,8 +338,13 @@ export default function Dashboard() {
                 {!userKeys ? (
                   <div className="card text-center py-16 bg-white space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-serif text-[#0F172A]">Encryption Keys Required</h2>
-                      <p className="text-sm text-slate-500">Accessing confidential state requires a cryptographic derivation via your wallet.</p>
+                      <h2 className="text-2xl font-serif text-[#0F172A]">
+                        Encryption Keys Required
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        Accessing confidential state requires a cryptographic
+                        derivation via your wallet.
+                      </p>
                     </div>
                     <button
                       onClick={() => {
@@ -340,24 +364,41 @@ export default function Dashboard() {
                       {/* Deposit Section */}
                       <section className="space-y-6">
                         <div className="flex items-center gap-4">
-                          <h2 className="text-xl font-serif text-[#0F172A]">Deposit to Confidential</h2>
+                          <h2 className="text-xl font-serif text-[#0F172A]">
+                            Deposit to Confidential
+                          </h2>
                           <div className="h-px flex-1 bg-slate-100" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                           <div className="md:col-span-3">
-                            <label htmlFor="deposit-amount" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
+                            <label
+                              htmlFor="deposit-amount"
+                              className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
+                            >
+                              Amount
+                            </label>
                             <input
                               id="deposit-amount"
                               type="number"
                               step="0.01"
+                              min="0"
                               value={depositAmount}
-                              onChange={(e) => setDepositAmount(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (Number(val) < 0) return;
+                                if (!/^\d*\.?\d{0,2}$/.test(val)) return;
+                                setDepositAmount(val);
+                              }}
                               className="input-primary"
                               placeholder="0.00"
                             />
                           </div>
                           <button
-                            onClick={() => handleTransaction("Deposit", () => confidentialDeposit(depositAmount))}
+                            onClick={() =>
+                              handleTransaction("Deposit", () =>
+                                confidentialDeposit(depositAmount),
+                              )
+                            }
                             disabled={loading || !depositAmount}
                             className="btn-primary w-full"
                           >
@@ -369,16 +410,27 @@ export default function Dashboard() {
                       {/* Transfer Section */}
                       <section className="space-y-6">
                         <div className="flex items-center gap-4">
-                          <h2 className="text-xl font-serif text-[#0F172A]">Private Transfer</h2>
+                          <h2 className="text-xl font-serif text-[#0F172A]">
+                            Private Transfer
+                          </h2>
                           <div className="h-px flex-1 bg-slate-100" />
                         </div>
                         <div className="space-y-4">
                           <div>
                             <div className="flex items-center justify-between mb-2">
-                              <label htmlFor="recipient-address" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Recipient Address</label>
+                              <label
+                                htmlFor="recipient-address"
+                                className="text-[10px] uppercase tracking-widest text-slate-400 font-bold"
+                              >
+                                Recipient Address
+                              </label>
                               <button
                                 type="button"
-                                onClick={() => setRecipient("0x30626CD95A17fD54A5e3291c2daFDf46D2786425")}
+                                onClick={() =>
+                                  setRecipient(
+                                    "0xD9A6E167a149219155a1bc5480Bc9738CdDb48F7",
+                                  )
+                                }
                                 className="text-[10px] text-[#1E4FD6] hover:underline font-mono"
                               >
                                 Use demo account
@@ -395,20 +447,40 @@ export default function Dashboard() {
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <div className="md:col-span-3">
-                              <label htmlFor="transfer-amount" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
+                              <label
+                                htmlFor="transfer-amount"
+                                className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
+                              >
+                                Amount
+                              </label>
                               <input
                                 id="transfer-amount"
                                 type="number"
                                 step="0.01"
+                                min="0"
                                 value={transferAmount}
-                                onChange={(e) => setTransferAmount(e.target.value)}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (Number(val) < 0) return;
+                                  if (!/^\d*\.?\d{0,2}$/.test(val)) return;
+                                  setTransferAmount(val);
+                                }}
                                 className="input-primary"
                                 placeholder="0.00"
                               />
                             </div>
                             <button
-                              onClick={() => handleTransaction("Transfer", () => confidentialTransfer(recipient, transferAmount))}
-                              disabled={loading || !transferAmount || !recipient}
+                              onClick={() =>
+                                handleTransaction("Transfer", () =>
+                                  confidentialTransfer(
+                                    recipient,
+                                    transferAmount,
+                                  ),
+                                )
+                              }
+                              disabled={
+                                loading || !transferAmount || !recipient
+                              }
                               className="btn-primary w-full"
                             >
                               Transfer
@@ -420,24 +492,41 @@ export default function Dashboard() {
                       {/* Withdraw Section */}
                       <section className="space-y-6">
                         <div className="flex items-center gap-4">
-                          <h2 className="text-xl font-serif text-[#0F172A]">Withdraw to Public</h2>
+                          <h2 className="text-xl font-serif text-[#0F172A]">
+                            Withdraw to Public
+                          </h2>
                           <div className="h-px flex-1 bg-slate-100" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                           <div className="md:col-span-3">
-                            <label htmlFor="withdraw-amount" className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
+                            <label
+                              htmlFor="withdraw-amount"
+                              className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
+                            >
+                              Amount
+                            </label>
                             <input
                               id="withdraw-amount"
                               type="number"
                               step="0.01"
+                              min="0"
                               value={withdrawAmount}
-                              onChange={(e) => setWithdrawAmount(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (Number(val) < 0) return;
+                                if (!/^\d*\.?\d{0,2}$/.test(val)) return;
+                                setWithdrawAmount(val);
+                              }}
                               className="input-primary"
                               placeholder="0.00"
                             />
                           </div>
                           <button
-                            onClick={() => handleTransaction("Withdraw", () => withdraw(withdrawAmount))}
+                            onClick={() =>
+                              handleTransaction("Withdraw", () =>
+                                withdraw(withdrawAmount),
+                              )
+                            }
                             disabled={loading || !withdrawAmount}
                             className="btn-secondary w-full"
                           >
@@ -450,7 +539,6 @@ export default function Dashboard() {
                 )}
               </div>
             )}
-
           </div>
         </main>
 
@@ -463,15 +551,25 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1">
               <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1 shadow-sm">
-                <h3 className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Public Balance</h3>
+                <h3 className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                  Public Balance
+                </h3>
                 <div className="text-2xl font-serif text-[#0F172A]">
-                  {balances.public} <span className="text-xs font-sans text-slate-400">{tokenSymbol}</span>
+                  {balances.public}{" "}
+                  <span className="text-xs font-sans text-slate-400">
+                    {tokenSymbol}
+                  </span>
                 </div>
               </div>
               <div className="p-6 border border-[#1E4FD6]/20 bg-[#1E4FD6]/5 space-y-1 shadow-sm">
-                <h3 className="text-[10px] text-[#1E4FD6] uppercase tracking-widest font-bold italic">Confidential Balance</h3>
+                <h3 className="text-[10px] text-[#1E4FD6] uppercase tracking-widest font-bold italic">
+                  Confidential Balance
+                </h3>
                 <div className="text-2xl font-serif text-[#0F172A]">
-                  {balances.confidential} <span className="text-xs font-sans text-slate-400">{tokenSymbol}</span>
+                  {balances.confidential}{" "}
+                  <span className="text-xs font-sans text-slate-400">
+                    {tokenSymbol}
+                  </span>
                 </div>
               </div>
             </div>
@@ -496,10 +594,14 @@ export default function Dashboard() {
               <div className="p-6 border border-slate-100 bg-green-50/30 space-y-4 shadow-sm">
                 <div className="flex items-center gap-2 text-green-600">
                   <Check className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Confirmed</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Confirmed
+                  </span>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Hash</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                    Hash
+                  </p>
                   <a
                     href={`${config.explorerUrl}${lastTxHash}`}
                     target="_blank"
@@ -512,7 +614,9 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="p-8 border border-dashed border-slate-200 text-center">
-                <p className="text-xs text-slate-400 italic">No recent activity.</p>
+                <p className="text-xs text-slate-400 italic">
+                  No recent activity.
+                </p>
               </div>
             )}
           </div>
@@ -520,12 +624,15 @@ export default function Dashboard() {
           {/* Integrate Section */}
           <div className="space-y-6 pt-10 border-t border-slate-100">
             <div className="space-y-2">
-              <h4 className="text-lg font-serif text-[#0F172A]">Integrate with Fairblock</h4>
+              <h4 className="text-lg font-serif text-[#0F172A]">
+                Integrate with Fairblock
+              </h4>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Unlock programmable privacy for your application. Access our core SDK documentation and partner resources.
+                Unlock programmable privacy for your application. Access our
+                core SDK documentation and partner resources.
               </p>
             </div>
-            
+
             <div className="space-y-3">
               <a
                 href="https://partners.fairblock.network/"
@@ -533,17 +640,21 @@ export default function Dashboard() {
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between p-5 bg-[#1E4FD6] text-white transition-all hover:bg-[#0F36A8]"
               >
-                <span className="text-xs font-bold uppercase tracking-widest">Partner Portal</span>
+                <span className="text-xs font-bold uppercase tracking-widest">
+                  Partner Portal
+                </span>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-              
+
               <a
                 href="https://docs.fairblock.network"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between p-5 border border-slate-200 text-[#0F172A] hover:border-[#1E4FD6] transition-all bg-white"
               >
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#1E4FD6]">Developer Docs</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#1E4FD6]">
+                  Developer Docs
+                </span>
                 <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-[#1E4FD6] transition-all" />
               </a>
             </div>

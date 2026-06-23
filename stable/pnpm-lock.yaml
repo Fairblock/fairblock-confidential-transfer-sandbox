@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fairblock/stabletrust':
-        specifier: ^1.0.17
-        version: 1.0.21(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^2.0.7
+        version: 2.0.7(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@farcaster/mini-app-solana':
         specifier: ^2.0.0
         version: 2.0.0(@farcaster/miniapp-sdk@0.3.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3))(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/wallet-adapter-react@0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(bs58@6.0.0)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.3)(utf-8-validate@6.0.6))(react@19.2.3)(typescript@5.9.3))(bufferutil@4.1.0)(react@19.2.3)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -361,8 +361,8 @@ packages:
     resolution: {integrity: sha512-zQ0IqbdX8FZ9aw11vP+dZkKDkS+kgIvQPHnSAXzP9pLu+Rfu3D3XEeLbicvoXJTYnhZiPmsZUxgdzXwNKxRPbA==}
     engines: {node: '>=14'}
 
-  '@fairblock/stabletrust@1.0.21':
-    resolution: {integrity: sha512-dEQobclL58lO4934gkONGHf5XMMZIuVjKm2NLS0j39NFs1J93XJj+gPSqHbCCtMOHHbgTwF0uGiZDneq32m4zA==}
+  '@fairblock/stabletrust@2.0.7':
+    resolution: {integrity: sha512-gg9hxJMaQd1XBi9qjmGphDtu/AbP8YpTvGnmqOFUQ2Mfm4wDEoRUdeQAP+KugAfV6OZnGble4LQ64/vOOmtUzw==}
     engines: {node: '>=16.0.0'}
 
   '@farcaster/mini-app-solana@2.0.0':
@@ -7321,7 +7321,7 @@ snapshots:
       ethereum-cryptography: 2.2.1
       micro-ftch: 0.3.1
 
-  '@fairblock/stabletrust@1.0.21(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@fairblock/stabletrust@2.0.7(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       dotenv: 17.4.2
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)

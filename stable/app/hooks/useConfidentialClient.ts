@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { ConfidentialTransferClient } from "@fairblock/stabletrust";
 import { parseError, AppError } from "../utils/errorParser";
 import { getRpcUrl } from "../actions/rpc";
 import { sendFaucet } from "../actions/faucet";
+
 export interface ConfidentialConfig {
   rpcUrl: string;
   tokenAddress: string;
@@ -22,10 +23,12 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
     "https://testnet.stablescan.xyz/tx/",
   chainId: Number.parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "2201"),
 };
+
 export function useConfidentialClient() {
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
   const [config, setConfig] = useState<ConfidentialConfig>(DEFAULT_CONFIG);
+
   const client = useMemo(() => {
     try {
       return new ConfidentialTransferClient(config.rpcUrl, config.chainId);
@@ -50,6 +53,10 @@ export function useConfidentialClient() {
   const [tokenDecimals, setTokenDecimals] = useState(18);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
+  const isFetching = useRef(false);
+  const signerAddressRef = useRef<string | null>(null);
+  const signerPending = useRef(false);
+
   useEffect(() => {
     async function initRpc() {
       try {
@@ -65,10 +72,6 @@ export function useConfidentialClient() {
   }, []);
 
   useEffect(() => {
-    console.log("Config is set for chainId:", config.chainId);
-  }, [config]);
-
-  useEffect(() => {
     async function fetchTokenDetails() {
       if (!config.tokenAddress || !config.rpcUrl) return;
       try {
@@ -81,12 +84,10 @@ export function useConfidentialClient() {
           ],
           provider,
         );
-
         const [sym, dec] = await Promise.all([
           tokenContract.symbol().catch(() => "TKN"),
           tokenContract.decimals().catch(() => 18),
         ]);
-
         setTokenSymbol(sym);
         setTokenDecimals(Number(dec));
       } catch (err) {
@@ -96,9 +97,9 @@ export function useConfidentialClient() {
     fetchTokenDetails();
   }, [config.tokenAddress, config.rpcUrl]);
 
-
-
   useEffect(() => {
+    let cancelled = false;
+
     async function getSigner() {
       if (authenticated && wallets.length > 0) {
         let wallet = wallets[0];
@@ -122,37 +123,61 @@ export function useConfidentialClient() {
             if (matchingWallet) {
               wallet = matchingWallet;
             } else {
-              console.log("Waiting for matching wallet");
               return;
             }
           }
         }
 
+        const walletAddress = wallet.address.toLowerCase();
+        if (signerAddressRef.current === walletAddress) return;
+        if (signerPending.current) return;
+        signerPending.current = true;
+
         try {
           await wallet.switchChain(config.chainId);
+          if (cancelled) return;
           const provider = await wallet.getEthereumProvider();
-          const ethereProvider = new ethers.BrowserProvider(provider);
-          const s = await ethereProvider.getSigner();
+          if (cancelled) return;
+          const ethersProvider = new ethers.BrowserProvider(provider);
+          const s = await ethersProvider.getSigner();
+          if (cancelled) return;
+          signerAddressRef.current = walletAddress;
+          // Stable chain is Cosmos EVM — it tracks nonces sequentially on-chain.
+          // NonceManager's optimistic local counter over-counts when a tx is rejected,
+          // causing "nonce too high" errors. Use the raw signer instead.
           setSigner(s);
+          setError(null);
         } catch (err) {
+          if (cancelled) return;
           console.error("Failed to set signer:", err);
+          signerAddressRef.current = null;
+          setSigner(null);
+          setError(
+            `Wallet setup failed: ${(err as Error).message ?? "unknown error"}. ` +
+            `Make sure your wallet is unlocked and switched to Stable Testnet (chain ID ${config.chainId}).`,
+          );
+        } finally {
+          signerPending.current = false;
         }
       } else {
-        // Use an async block to reset state to avoid synchronous setState in effect warning
-        const resetState = async () => {
-          await Promise.resolve();
-          setSigner(null);
-          setUserKeys(null);
-          setBalances({ public: "0", confidential: "0" });
-        };
-        resetState();
+        signerAddressRef.current = null;
+        setSigner(null);
+        setUserKeys(null);
+        setBalances({ public: "0", confidential: "0" });
       }
     }
+
     getSigner();
+    return () => {
+      cancelled = true;
+    };
   }, [authenticated, wallets, config.chainId, user]);
 
   const ensureAccount = useCallback(async () => {
-    if (!client || !signer) return;
+    if (!client || !signer) {
+      setError("Wallet not ready — please wait a moment and try again, or refresh the page.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -172,6 +197,8 @@ export function useConfidentialClient() {
   const fetchBalances = useCallback(
     async (silent: boolean = false) => {
       if (!signer) return;
+      if (isFetching.current) return;
+      isFetching.current = true;
       if (!silent) setLoading(true);
       try {
         const address = await signer.getAddress();
@@ -205,41 +232,29 @@ export function useConfidentialClient() {
 
         setBalances({
           public: ethers.formatUnits(publicBal, tokenDecimals),
-          confidential: ethers.formatUnits(
-            confidentialBal.amount,
-            tokenDecimals,
-          ),
+          confidential: ethers.formatUnits(confidentialBal.amount, tokenDecimals),
         });
       } catch (err) {
         console.error("Error fetching balances:", err);
       } finally {
+        isFetching.current = false;
         if (!silent) setLoading(false);
       }
     },
-    [
-      client,
-      signer,
-      userKeys,
-      config.tokenAddress,
-      tokenDecimals,
-    ],
+    [client, signer, userKeys, config.tokenAddress, tokenDecimals],
   );
+
+  const fetchBalancesRef = useRef(fetchBalances);
+  useEffect(() => {
+    fetchBalancesRef.current = fetchBalances;
+  }, [fetchBalances]);
 
   useEffect(() => {
     if (!signer) return;
-
-    // Call fetchBalances in an async manner to avoid synchronous setState warning
-    const initFetch = async () => {
-      await fetchBalances(true);
-    };
-    initFetch();
-
-    const interval = setInterval(() => {
-      fetchBalances(true);
-    }, 10000);
-
+    fetchBalancesRef.current(true);
+    const interval = setInterval(() => fetchBalancesRef.current(true), 10000);
     return () => clearInterval(interval);
-  }, [fetchBalances, signer]);
+  }, [signer]);
 
   const confidentialDeposit = useCallback(
     async (amount: string) => {
@@ -254,9 +269,7 @@ export function useConfidentialClient() {
           config.tokenAddress,
           amountWei,
         );
-
-        setTimeout(() => fetchBalances(true), 2000);
-
+        setTimeout(() => fetchBalancesRef.current(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -267,7 +280,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress, tokenDecimals],
+    [client, signer, config.tokenAddress, tokenDecimals],
   );
 
   const confidentialTransfer = useCallback(
@@ -284,7 +297,7 @@ export function useConfidentialClient() {
           config.tokenAddress,
           Number(amountWei),
         );
-        setTimeout(() => fetchBalances(true), 2000);
+        setTimeout(() => fetchBalancesRef.current(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -295,7 +308,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress, tokenDecimals],
+    [client, signer, config.tokenAddress, tokenDecimals],
   );
 
   const withdraw = useCallback(
@@ -311,7 +324,7 @@ export function useConfidentialClient() {
           config.tokenAddress,
           Number(amountWei),
         );
-        setTimeout(() => fetchBalances(true), 2000);
+        setTimeout(() => fetchBalancesRef.current(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -322,7 +335,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress, tokenDecimals],
+    [client, signer, config.tokenAddress, tokenDecimals],
   );
 
   const requestFaucet = useCallback(async () => {
@@ -335,7 +348,7 @@ export function useConfidentialClient() {
       if (!result.success) {
         throw new Error(result.error || "Faucet request failed");
       }
-      setTimeout(() => fetchBalances(true), 2000);
+      setTimeout(() => fetchBalancesRef.current(true), 2000);
       return result;
     } catch (err) {
       const errorMessage = parseError(err as AppError);
@@ -344,11 +357,10 @@ export function useConfidentialClient() {
     } finally {
       setLoading(false);
     }
-  }, [signer, fetchBalances]);
+  }, [signer]);
 
   return {
     config,
-
     client,
     signer,
     userKeys,

@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
       ...config.resolve.alias,
       "@farcaster/mini-app-solana": false,
     };
+    // Suppress the "Critical dependency: expression in require()" warning
+    // from ox/tempo used by viem's tempo chain definitions (unused by this app).
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      { module: /ox\/_esm\/tempo/ },
+    ];
+
     return config;
   },
 };

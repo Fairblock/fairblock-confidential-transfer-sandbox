@@ -1,16 +1,25 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { ConfidentialTransferClient } from "@fairblock/stabletrust";
 import { parseError, AppError } from "../utils/errorParser";
 import { getRpcUrl } from "../actions/rpc";
 import { sendFaucet } from "../actions/faucet";
+
 export interface ConfidentialConfig {
   rpcUrl: string;
   tokenAddress: string;
   explorerUrl: string;
   chainId: number;
 }
+
+const CONFIDENTIAL_CONTRACT_ADDRESS =
+  "0x4a251C9D79faCa20b193630A4ee313af7cBCDD93"; // Base Sepolia
+
+const ERC20_MINIMAL_ABI = [
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+];
 
 const DEFAULT_CONFIG: ConfidentialConfig = {
   rpcUrl: "https://base-sepolia.drpc.org",
@@ -21,6 +30,7 @@ const DEFAULT_CONFIG: ConfidentialConfig = {
     process.env.NEXT_PUBLIC_EXPLORER_URL || "https://sepolia.basescan.org/tx/",
   chainId: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "84532"),
 };
+
 export function useConfidentialClient() {
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
@@ -41,6 +51,9 @@ export function useConfidentialClient() {
   const [tokenSymbol, setTokenSymbol] = useState("TKN");
   const [tokenDecimals, setTokenDecimals] = useState(18);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  const isFetching = useRef(false);
+  const signerAddressRef = useRef<string | null>(null);
+  const signerPending = useRef(false);
 
   useEffect(() => {
     async function initRpc() {
@@ -57,10 +70,6 @@ export function useConfidentialClient() {
   }, []);
 
   useEffect(() => {
-    console.log("Config is now set for chainId:", config.chainId);
-  }, [config]);
-
-  useEffect(() => {
     async function fetchTokenDetails() {
       if (!config.tokenAddress || !config.rpcUrl) return;
       try {
@@ -73,12 +82,10 @@ export function useConfidentialClient() {
           ],
           provider,
         );
-
         const [sym, dec] = await Promise.all([
           tokenContract.symbol().catch(() => "TKN"),
           tokenContract.decimals().catch(() => 18),
         ]);
-
         setTokenSymbol(sym);
         setTokenDecimals(Number(dec));
       } catch (err) {
@@ -98,6 +105,8 @@ export function useConfidentialClient() {
   }, [config.rpcUrl, config.chainId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function getSigner() {
       if (authenticated && wallets.length > 0) {
         let wallet = wallets[0];
@@ -122,32 +131,66 @@ export function useConfidentialClient() {
             if (matchingWallet) {
               wallet = matchingWallet;
             } else {
-              console.log("Waiting for matching wallet");
               return;
             }
           }
         }
 
+        const walletAddress = wallet.address.toLowerCase();
+        if (signerAddressRef.current === walletAddress) return;
+        if (signerPending.current) return;
+        signerPending.current = true;
+
         try {
           await wallet.switchChain(config.chainId);
+          if (cancelled) return;
           const provider = await wallet.getEthereumProvider();
-          const ethereProvider = new ethers.BrowserProvider(provider);
-          const s = await ethereProvider.getSigner();
-          setSigner(s);
+          if (cancelled) return;
+          const ethersProvider = new ethers.BrowserProvider(provider);
+          const s = await ethersProvider.getSigner();
+          if (cancelled) return;
+          signerAddressRef.current = walletAddress;
+          // Privy embedded wallets don't track in-flight txs when reporting nonces,
+          // causing "nonce too low" when approve + deposit are sent back-to-back.
+          // NonceManager keeps a local sequential counter to avoid re-querying.
+          const isEmbedded =
+            wallet.walletClientType === "privy" ||
+            wallet.walletClientType === "privy-v2";
+          setSigner(isEmbedded ? new ethers.NonceManager(s) : s);
+          setError(null);
         } catch (err) {
+          if (cancelled) return;
           console.error("Failed to set signer:", err);
+          signerAddressRef.current = null;
+          setSigner(null);
+          setError(
+            `Wallet setup failed: ${(err as Error).message ?? "unknown error"}. ` +
+              `Make sure your wallet is unlocked and switched to Base Sepolia (chain ID 84532).`,
+          );
+        } finally {
+          signerPending.current = false;
         }
       } else {
+        signerAddressRef.current = null;
         setSigner(null);
         setUserKeys(null);
         setBalances({ public: "0", confidential: "0", native: "0" });
       }
     }
+
     getSigner();
+    return () => {
+      cancelled = true;
+    };
   }, [authenticated, wallets, config.chainId, user]);
 
   const ensureAccount = useCallback(async () => {
-    if (!client || !signer) return;
+    if (!client || !signer) {
+      setError(
+        "Wallet not ready please wait a moment and try again, or refresh the page.",
+      );
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -167,6 +210,8 @@ export function useConfidentialClient() {
   const fetchBalances = useCallback(
     async (silent: boolean = false) => {
       if (!signer) return;
+      if (isFetching.current) return;
+      isFetching.current = true;
       if (!silent) setLoading(true);
       try {
         const address = await signer.getAddress();
@@ -213,6 +258,7 @@ export function useConfidentialClient() {
       } catch (err) {
         console.error("Error fetching balances:", err);
       } finally {
+        isFetching.current = false;
         if (!silent) setLoading(false);
       }
     },
@@ -226,17 +272,17 @@ export function useConfidentialClient() {
     ],
   );
 
+  const fetchBalancesRef = useRef(fetchBalances);
+  useEffect(() => {
+    fetchBalancesRef.current = fetchBalances;
+  }, [fetchBalances]);
+
   useEffect(() => {
     if (!signer) return;
-
-    fetchBalances(true);
-
-    const interval = setInterval(() => {
-      fetchBalances(true);
-    }, 10000);
-
+    fetchBalancesRef.current(true);
+    const interval = setInterval(() => fetchBalancesRef.current(true), 15000);
     return () => clearInterval(interval);
-  }, [fetchBalances, signer]);
+  }, [signer]);
 
   const confidentialDeposit = useCallback(
     async (amount: string) => {
@@ -246,14 +292,34 @@ export function useConfidentialClient() {
       setError(null);
       try {
         const amountWei = ethers.parseUnits(amount, tokenDecimals);
+
+        // Approve the confidential contract to spend tokens before depositing.
+        // This runs before the SDK's internal approve so MetaMask only shows
+        // one popup and the SDK skips its own approve (allowance >= amount).
+        const erc20 = new ethers.Contract(
+          config.tokenAddress,
+          ERC20_MINIMAL_ABI,
+          signer,
+        );
+        const userAddress = await signer.getAddress();
+        const allowance: bigint = await erc20.allowance(
+          userAddress,
+          CONFIDENTIAL_CONTRACT_ADDRESS,
+        );
+        if (allowance < amountWei) {
+          const approveTx = await erc20.approve(
+            CONFIDENTIAL_CONTRACT_ADDRESS,
+            ethers.MaxUint256,
+          );
+          await approveTx.wait();
+        }
+
         const receipt = await client.confidentialDeposit(
           signer,
           config.tokenAddress,
           amountWei,
         );
-
-        setTimeout(() => fetchBalances(true), 2000);
-
+        setTimeout(() => fetchBalancesRef.current(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -264,7 +330,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress],
+    [client, signer, config.tokenAddress, tokenDecimals],
   );
 
   const confidentialTransfer = useCallback(
@@ -281,7 +347,7 @@ export function useConfidentialClient() {
           config.tokenAddress,
           Number(amountWei),
         );
-        setTimeout(() => fetchBalances(true), 2000);
+        setTimeout(() => fetchBalancesRef.current(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -292,7 +358,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress],
+    [client, signer, config.tokenAddress, tokenDecimals],
   );
 
   const withdraw = useCallback(
@@ -308,7 +374,7 @@ export function useConfidentialClient() {
           config.tokenAddress,
           Number(amountWei),
         );
-        setTimeout(() => fetchBalances(true), 2000);
+        setTimeout(() => fetchBalancesRef.current(true), 2000);
         setLastTxHash(receipt.hash);
         return { hash: receipt.hash };
       } catch (err) {
@@ -319,7 +385,7 @@ export function useConfidentialClient() {
         setLoading(false);
       }
     },
-    [client, signer, fetchBalances, config.tokenAddress],
+    [client, signer, config.tokenAddress, tokenDecimals],
   );
 
   const requestFaucet = useCallback(async () => {
@@ -332,7 +398,7 @@ export function useConfidentialClient() {
       if (!result.success) {
         throw new Error(result.error || "Faucet request failed");
       }
-      setTimeout(() => fetchBalances(true), 2000);
+      setTimeout(() => fetchBalancesRef.current(true), 2000);
       return result;
     } catch (err) {
       const errorMessage = parseError(err as AppError);
@@ -341,11 +407,10 @@ export function useConfidentialClient() {
     } finally {
       setLoading(false);
     }
-  }, [signer, fetchBalances]);
+  }, [signer]);
 
   return {
     config,
-
     client,
     signer,
     userKeys,

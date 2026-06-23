@@ -47,7 +47,7 @@ export default function Onboarding({
   const [depositAmount, setDepositAmount] = useState("0.2");
   const [transferAmount, setTransferAmount] = useState("0.1");
   const [recipient, setRecipient] = useState(
-    "0xD9A6E167a149219155a1bc5480Bc9738CdDb48F7",
+    "0x40461F7086603cA067Fc5FC1C1a0F4954FbAF51B",
   );
   const [withdrawAmount, setWithdrawAmount] = useState("0.1");
 
@@ -101,7 +101,9 @@ export default function Onboarding({
   return (
     <div className="card max-w-2xl mx-auto my-8 p-6 md:p-10 border border-slate-200 shadow-none bg-white">
       <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
-        <h2 className="text-2xl font-bold font-serif">Confidential Onboarding</h2>
+        <h2 className="text-2xl font-bold font-serif">
+          Confidential Onboarding
+        </h2>
         <button
           onClick={onComplete}
           className="text-sm underline text-gray-500 hover:text-black cursor-pointer"
@@ -141,7 +143,9 @@ export default function Onboarding({
       <div className="min-h-62.5">
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold font-serif">Step 1: Claim Testnet Tokens</h3>
+            <h3 className="text-xl font-bold font-serif">
+              Step 1: Claim Testnet Tokens
+            </h3>
             <p className="text-gray-600 text-sm">
               To get started, you need some testnet tokens (USDC) to pay for
               transactions and initial deposits.
@@ -168,7 +172,9 @@ export default function Onboarding({
 
         {step === 2 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold font-serif">Step 2: Initialize Account</h3>
+            <h3 className="text-xl font-bold font-serif">
+              Step 2: Initialize Account
+            </h3>
             <p className="text-gray-600 text-sm">
               Create or recover your confidential keys to enable confidential
               transfers. Your private balances will not unlock themselves.
@@ -215,7 +221,9 @@ export default function Onboarding({
               transfer them privately.
             </p>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">
+                Amount
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -255,10 +263,12 @@ export default function Onboarding({
 
         {step === 4 && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold font-serif">Step 4: Confidential Transfer</h3>
+            <h3 className="text-xl font-bold font-serif">
+              Step 4: Confidential Transfer
+            </h3>
             <p className="text-gray-600 text-sm">
               Send your confidential tokens to another address. Onchain
-              observers won't see the encrypted amount transferred.
+              observers wont see the encrypted amount transferred.
             </p>
             <div>
               <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">
@@ -274,7 +284,9 @@ export default function Onboarding({
                   disabled
                 />
               </div>
-              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">
+                Amount
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -323,7 +335,9 @@ export default function Onboarding({
               optional.
             </p>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Amount</label>
+              <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">
+                Amount
+              </label>
               <input
                 type="number"
                 step="0.01"

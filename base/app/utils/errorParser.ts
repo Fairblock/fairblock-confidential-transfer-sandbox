@@ -80,7 +80,7 @@ export function parseError(error: AppError): string {
     return "Your token balance is too low for this amount.";
   }
 
-  // Generic execution revert — extract the reason string
+  // Generic execution revert extract the reason string
   if (msg.includes("execution reverted")) {
     const quoted = msg.match(/execution reverted[^"]*"([^"]+)"/);
     if (quoted?.[1]) return `Transaction failed: ${quoted[1]}`;

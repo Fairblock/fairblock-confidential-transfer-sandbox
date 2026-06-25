@@ -9,6 +9,7 @@ import { supportedChains } from "./Providers";
 import Onboarding from "./Onboarding";
 import FluidLoader, { LoaderAction } from "./components/FluidLoader";
 import LoginPage from "./components/LoginPage";
+import AnonymousDashboard from "./AnonymousDashboard";
 import { Wallet, LogOut, Check, ArrowUpRight } from "lucide-react";
 
 export default function Dashboard() {
@@ -28,6 +29,22 @@ export default function Dashboard() {
     tokenSymbol,
     lastTxHash,
   } = useConfidentialClient();
+
+  const [mode, setMode] = useState<"confidential" | "anonymous">(() => {
+    if (typeof window !== "undefined") {
+      return (
+        (localStorage.getItem("fairblock_mode") as
+          | "confidential"
+          | "anonymous") || "confidential"
+      );
+    }
+    return "confidential";
+  });
+
+  const switchMode = (m: "confidential" | "anonymous") => {
+    setMode(m);
+    localStorage.setItem("fairblock_mode", m);
+  };
 
   const [depositAmount, setDepositAmount] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
@@ -258,9 +275,46 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Mode Toggle */}
+            <div className="space-y-3">
+              <div className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
+                Transfer Mode
+              </div>
+              <div className="flex border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => switchMode("confidential")}
+                  className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                    mode === "confidential"
+                      ? "bg-[#1E4FD6] text-white"
+                      : "text-slate-500 hover:bg-slate-50"
+                  }`}
+                >
+                  Confidential
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode("anonymous")}
+                  className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                    mode === "anonymous"
+                      ? "bg-[#0F172A] text-white"
+                      : "text-slate-500 hover:bg-slate-50"
+                  }`}
+                >
+                  Anonymous
+                </button>
+              </div>
+              <p className="text-[10px] text-black leading-relaxed">
+                {mode === "confidential"
+                  ? "Amounts encrypted. Wallet address visible onchain."
+                  : "Wallet address never revealed. Relay pays gas."}
+              </p>
+            </div>
+
             {/* Quick Actions */}
             <nav className="space-y-2">
               <button
+                type="button"
                 onClick={handleFaucetRequest}
                 disabled={faucetLoading}
                 className="w-full text-left p-3 text-sm font-medium hover:bg-slate-50 border-l-2 border-transparent hover:border-[#1E4FD6] transition-all flex items-center justify-between group"
@@ -271,13 +325,14 @@ export default function Dashboard() {
                 </span>
               </button>
               <button
+                type="button"
                 onClick={restartOnboarding}
                 className="w-full text-left p-3 text-sm font-medium hover:bg-slate-50 border-l-2 border-transparent hover:border-[#1E4FD6] transition-all"
               >
                 Onboarding Guide
               </button>
               <a
-                href="https://www.npmjs.com/package/@fairblock/stabletrust"
+                href="https://stabletrust-docs.fairblock.network/introduction"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full text-left p-3 text-sm font-medium hover:bg-slate-50 border-l-2 border-transparent hover:border-[#1E4FD6] transition-all block"
@@ -299,171 +354,98 @@ export default function Dashboard() {
           </button>
         </aside>
 
-        {/* Middle Column - Main Action Area */}
-        <main className="lg:col-span-5 p-6 md:p-10 lg:h-screen overflow-y-auto">
-          <div className="space-y-10">
-            {error && (
-              <div className="bg-red-50 border border-red-100 text-red-700 px-6 py-4 flex items-center justify-between">
-                <p className="text-sm font-medium">{error}</p>
-                <button
-                  onClick={() => globalThis.location.reload()}
-                  className="text-xs underline"
-                >
-                  Dismiss
-                </button>
-              </div>
-            )}
+        {mode === "anonymous" && <AnonymousDashboard />}
 
-            {!onboardingFinished ? (
-              <Onboarding
-                onComplete={completeOnboarding}
-                config={config}
-                balances={balances}
-                userKeys={userKeys}
-                loading={loading}
-                faucetLoading={faucetLoading}
-                handleFaucetRequest={handleFaucetRequest}
-                ensureAccount={async () => {
-                  setLoaderAction("Init");
-                  await ensureAccount();
-                }}
-                confidentialDeposit={confidentialDeposit}
-                confidentialTransfer={confidentialTransfer}
-                withdraw={withdraw}
-                tokenSymbol={tokenSymbol}
-                handleTransaction={handleTransaction}
-              />
-            ) : (
-              <div className="space-y-10">
-                {!userKeys ? (
-                  <div className="card text-center py-16 bg-white space-y-6">
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-serif text-[#0F172A]">
-                        Encryption Keys Required
-                      </h2>
-                      <p className="text-sm text-slate-500">
-                        Accessing confidential state requires a cryptographic
-                        derivation via your wallet.
-                      </p>
+        {/* Middle Column - Confidential Action Area */}
+        {mode === "confidential" && (
+          <main className="lg:col-span-5 p-6 md:p-10 lg:h-screen overflow-y-auto">
+            <div className="space-y-10">
+              {error && (
+                <div className="bg-red-50 border border-red-100 text-red-700 px-6 py-4 flex items-center justify-between">
+                  <p className="text-sm font-medium">{error}</p>
+                  <button
+                    onClick={() => globalThis.location.reload()}
+                    className="text-xs underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              {!onboardingFinished ? (
+                <Onboarding
+                  onComplete={completeOnboarding}
+                  config={config}
+                  balances={balances}
+                  userKeys={userKeys}
+                  loading={loading}
+                  faucetLoading={faucetLoading}
+                  handleFaucetRequest={handleFaucetRequest}
+                  ensureAccount={async () => {
+                    setLoaderAction("Init");
+                    await ensureAccount();
+                  }}
+                  confidentialDeposit={confidentialDeposit}
+                  confidentialTransfer={confidentialTransfer}
+                  withdraw={withdraw}
+                  tokenSymbol={tokenSymbol}
+                  handleTransaction={handleTransaction}
+                />
+              ) : (
+                <div className="space-y-10">
+                  {!userKeys ? (
+                    <div className="card text-center py-16 bg-white space-y-6">
+                      <div className="space-y-2">
+                        <h2 className="text-2xl font-serif text-[#0F172A]">
+                          Encryption Keys Required
+                        </h2>
+                        <p className="text-sm text-slate-500">
+                          Accessing confidential state requires a cryptographic
+                          derivation via your wallet.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setLoaderAction("Init");
+                          ensureAccount();
+                        }}
+                        className="btn-primary"
+                        disabled={loading}
+                      >
+                        Derive Confidential Keys
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setLoaderAction("Init");
-                        ensureAccount();
-                      }}
-                      className="btn-primary"
-                      disabled={loading}
-                    >
-                      Derive Confidential Keys
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {/* Action Forms */}
-                    <div className="space-y-12">
-                      {/* Deposit Section */}
-                      <section className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <h2 className="text-xl font-serif text-[#0F172A]">
-                            Deposit to Confidential
-                          </h2>
-                          <div className="h-px flex-1 bg-slate-100" />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                          <div className="md:col-span-3">
-                            <label
-                              htmlFor="deposit-amount"
-                              className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
-                            >
-                              Amount
-                            </label>
-                            <input
-                              id="deposit-amount"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={depositAmount}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (Number(val) < 0) return;
-                                if (!/^\d*\.?\d{0,2}$/.test(val)) return;
-                                setDepositAmount(val);
-                              }}
-                              className="input-primary"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <button
-                            onClick={() =>
-                              handleTransaction("Deposit", () =>
-                                confidentialDeposit(depositAmount),
-                              )
-                            }
-                            disabled={loading || !depositAmount}
-                            className="btn-primary w-full"
-                          >
-                            Deposit
-                          </button>
-                        </div>
-                      </section>
-
-                      {/* Transfer Section */}
-                      <section className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <h2 className="text-xl font-serif text-[#0F172A]">
-                            Private Transfer
-                          </h2>
-                          <div className="h-px flex-1 bg-slate-100" />
-                        </div>
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <label
-                                htmlFor="recipient-address"
-                                className="text-[10px] uppercase tracking-widest text-slate-400 font-bold"
-                              >
-                                Recipient Address
-                              </label>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setRecipient(
-                                    "0xD9A6E167a149219155a1bc5480Bc9738CdDb48F7",
-                                  )
-                                }
-                                className="text-[10px] text-[#1E4FD6] hover:underline font-mono"
-                              >
-                                Use demo account
-                              </button>
-                            </div>
-                            <input
-                              id="recipient-address"
-                              type="text"
-                              value={recipient}
-                              onChange={(e) => setRecipient(e.target.value)}
-                              className="input-primary"
-                              placeholder="0x..."
-                            />
+                  ) : (
+                    <div className="space-y-8">
+                      {/* Action Forms */}
+                      <div className="space-y-12">
+                        {/* Deposit Section */}
+                        <section className="space-y-6">
+                          <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-serif text-[#0F172A]">
+                              Deposit to Confidential
+                            </h2>
+                            <div className="h-px flex-1 bg-slate-100" />
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <div className="md:col-span-3">
                               <label
-                                htmlFor="transfer-amount"
+                                htmlFor="deposit-amount"
                                 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
                               >
                                 Amount
                               </label>
                               <input
-                                id="transfer-amount"
+                                id="deposit-amount"
                                 type="number"
                                 step="0.01"
                                 min="0"
-                                value={transferAmount}
+                                value={depositAmount}
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   if (Number(val) < 0) return;
                                   if (!/^\d*\.?\d{0,2}$/.test(val)) return;
-                                  setTransferAmount(val);
+                                  setDepositAmount(val);
                                 }}
                                 className="input-primary"
                                 placeholder="0.00"
@@ -471,195 +453,274 @@ export default function Dashboard() {
                             </div>
                             <button
                               onClick={() =>
-                                handleTransaction("Transfer", () =>
-                                  confidentialTransfer(
-                                    recipient,
-                                    transferAmount,
-                                  ),
+                                handleTransaction("Deposit", () =>
+                                  confidentialDeposit(depositAmount),
                                 )
                               }
-                              disabled={
-                                loading || !transferAmount || !recipient
-                              }
+                              disabled={loading || !depositAmount}
                               className="btn-primary w-full"
                             >
-                              Transfer
+                              Deposit
                             </button>
                           </div>
-                        </div>
-                      </section>
+                        </section>
 
-                      {/* Withdraw Section */}
-                      <section className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <h2 className="text-xl font-serif text-[#0F172A]">
-                            Withdraw to Public
-                          </h2>
-                          <div className="h-px flex-1 bg-slate-100" />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                          <div className="md:col-span-3">
-                            <label
-                              htmlFor="withdraw-amount"
-                              className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
-                            >
-                              Amount
-                            </label>
-                            <input
-                              id="withdraw-amount"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={withdrawAmount}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (Number(val) < 0) return;
-                                if (!/^\d*\.?\d{0,2}$/.test(val)) return;
-                                setWithdrawAmount(val);
-                              }}
-                              className="input-primary"
-                              placeholder="0.00"
-                            />
+                        {/* Transfer Section */}
+                        <section className="space-y-6">
+                          <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-serif text-[#0F172A]">
+                              Private Transfer
+                            </h2>
+                            <div className="h-px flex-1 bg-slate-100" />
                           </div>
-                          <button
-                            onClick={() =>
-                              handleTransaction("Withdraw", () =>
-                                withdraw(withdrawAmount),
-                              )
-                            }
-                            disabled={loading || !withdrawAmount}
-                            className="btn-secondary w-full"
-                          >
-                            Withdraw
-                          </button>
-                        </div>
-                      </section>
+                          <div className="space-y-4">
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <label
+                                  htmlFor="recipient-address"
+                                  className="text-[10px] uppercase tracking-widest text-slate-400 font-bold"
+                                >
+                                  Recipient Address
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRecipient(
+                                      "0xD9A6E167a149219155a1bc5480Bc9738CdDb48F7",
+                                    )
+                                  }
+                                  className="text-[10px] text-[#1E4FD6] hover:underline font-mono"
+                                >
+                                  Use demo account
+                                </button>
+                              </div>
+                              <input
+                                id="recipient-address"
+                                type="text"
+                                value={recipient}
+                                onChange={(e) => setRecipient(e.target.value)}
+                                className="input-primary"
+                                placeholder="0x..."
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                              <div className="md:col-span-3">
+                                <label
+                                  htmlFor="transfer-amount"
+                                  className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
+                                >
+                                  Amount
+                                </label>
+                                <input
+                                  id="transfer-amount"
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={transferAmount}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (Number(val) < 0) return;
+                                    if (!/^\d*\.?\d{0,2}$/.test(val)) return;
+                                    setTransferAmount(val);
+                                  }}
+                                  className="input-primary"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                              <button
+                                onClick={() =>
+                                  handleTransaction("Transfer", () =>
+                                    confidentialTransfer(
+                                      recipient,
+                                      transferAmount,
+                                    ),
+                                  )
+                                }
+                                disabled={
+                                  loading || !transferAmount || !recipient
+                                }
+                                className="btn-primary w-full"
+                              >
+                                Transfer
+                              </button>
+                            </div>
+                          </div>
+                        </section>
+
+                        {/* Withdraw Section */}
+                        <section className="space-y-6">
+                          <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-serif text-[#0F172A]">
+                              Withdraw to Public
+                            </h2>
+                            <div className="h-px flex-1 bg-slate-100" />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div className="md:col-span-3">
+                              <label
+                                htmlFor="withdraw-amount"
+                                className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 block"
+                              >
+                                Amount
+                              </label>
+                              <input
+                                id="withdraw-amount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={withdrawAmount}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (Number(val) < 0) return;
+                                  if (!/^\d*\.?\d{0,2}$/.test(val)) return;
+                                  setWithdrawAmount(val);
+                                }}
+                                className="input-primary"
+                                placeholder="0.00"
+                              />
+                            </div>
+                            <button
+                              onClick={() =>
+                                handleTransaction("Withdraw", () =>
+                                  withdraw(withdrawAmount),
+                                )
+                              }
+                              disabled={loading || !withdrawAmount}
+                              className="btn-secondary w-full"
+                            >
+                              Withdraw
+                            </button>
+                          </div>
+                        </section>
+                      </div>
                     </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </main>
+        )}
+
+        {/* Right Sidebar - Balances & Activity (confidential only) */}
+        {mode === "confidential" && (
+          <aside className="lg:col-span-3 bg-white border-l border-slate-200 p-6 md:p-8 space-y-10 lg:h-screen overflow-y-auto">
+            {/* Balances Section */}
+            <div className="space-y-6">
+              <div className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
+                Account Assets
+              </div>
+              <div className="space-y-1">
+                <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1 shadow-sm">
+                  <h3 className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                    Public Balance
+                  </h3>
+                  <div className="text-2xl font-serif text-[#0F172A]">
+                    {balances.public}{" "}
+                    <span className="text-xs font-sans text-slate-400">
+                      {tokenSymbol}
+                    </span>
                   </div>
-                )}
+                </div>
+                <div className="p-6 border border-[#1E4FD6]/20 bg-[#1E4FD6]/5 space-y-1 shadow-sm">
+                  <h3 className="text-[10px] text-[#1E4FD6] uppercase tracking-widest font-bold italic">
+                    Confidential Balance
+                  </h3>
+                  <div className="text-2xl font-serif text-[#0F172A]">
+                    {balances.confidential}{" "}
+                    <span className="text-xs font-sans text-slate-400">
+                      {tokenSymbol}
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        </main>
+              <button
+                onClick={() => {
+                  setLoaderAction("Refresh");
+                  fetchBalances();
+                }}
+                className="w-full py-3 text-[10px] uppercase tracking-widest font-bold border border-slate-200 hover:bg-slate-50 transition-colors"
+                disabled={loading}
+              >
+                Refresh Assets
+              </button>
+            </div>
 
-        {/* Right Sidebar - Balances & Activity */}
-        <aside className="lg:col-span-3 bg-white border-l border-slate-200 p-6 md:p-8 space-y-10 lg:h-screen overflow-y-auto">
-          {/* Balances Section */}
-          <div className="space-y-6">
-            <div className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
-              Account Assets
-            </div>
-            <div className="space-y-1">
-              <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1 shadow-sm">
-                <h3 className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                  Public Balance
-                </h3>
-                <div className="text-2xl font-serif text-[#0F172A]">
-                  {balances.public}{" "}
-                  <span className="text-xs font-sans text-slate-400">
-                    {tokenSymbol}
-                  </span>
-                </div>
+            {/* Latest Transaction */}
+            <div className="space-y-4">
+              <div className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
+                Activity Log
               </div>
-              <div className="p-6 border border-[#1E4FD6]/20 bg-[#1E4FD6]/5 space-y-1 shadow-sm">
-                <h3 className="text-[10px] text-[#1E4FD6] uppercase tracking-widest font-bold italic">
-                  Confidential Balance
-                </h3>
-                <div className="text-2xl font-serif text-[#0F172A]">
-                  {balances.confidential}{" "}
-                  <span className="text-xs font-sans text-slate-400">
-                    {tokenSymbol}
-                  </span>
+              {lastTxHash ? (
+                <div className="p-6 border border-slate-100 bg-green-50/30 space-y-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Check className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      Confirmed
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                      Hash
+                    </p>
+                    <a
+                      href={`${config.explorerUrl}${lastTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-mono break-all hover:text-[#1E4FD6] underline"
+                    >
+                      {lastTxHash}
+                    </a>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setLoaderAction("Refresh");
-                fetchBalances();
-              }}
-              className="w-full py-3 text-[10px] uppercase tracking-widest font-bold border border-slate-200 hover:bg-slate-50 transition-colors"
-              disabled={loading}
-            >
-              Refresh Assets
-            </button>
-          </div>
-
-          {/* Latest Transaction */}
-          <div className="space-y-4">
-            <div className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
-              Activity Log
-            </div>
-            {lastTxHash ? (
-              <div className="p-6 border border-slate-100 bg-green-50/30 space-y-4 shadow-sm">
-                <div className="flex items-center gap-2 text-green-600">
-                  <Check className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Confirmed
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                    Hash
+              ) : (
+                <div className="p-8 border border-dashed border-slate-200 text-center">
+                  <p className="text-xs text-slate-400 italic">
+                    No recent activity.
                   </p>
-                  <a
-                    href={`${config.explorerUrl}${lastTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] font-mono break-all hover:text-[#1E4FD6] underline"
-                  >
-                    {lastTxHash}
-                  </a>
                 </div>
-              </div>
-            ) : (
-              <div className="p-8 border border-dashed border-slate-200 text-center">
-                <p className="text-xs text-slate-400 italic">
-                  No recent activity.
+              )}
+            </div>
+
+            {/* Integrate Section */}
+            <div className="space-y-6 pt-10 border-t border-slate-100">
+              <div className="space-y-2">
+                <h4 className="text-lg font-serif text-[#0F172A]">
+                  Integrate with Fairblock
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Unlock programmable privacy for your application. Access our
+                  core SDK documentation and partner resources.
                 </p>
               </div>
-            )}
-          </div>
 
-          {/* Integrate Section */}
-          <div className="space-y-6 pt-10 border-t border-slate-100">
-            <div className="space-y-2">
-              <h4 className="text-lg font-serif text-[#0F172A]">
-                Integrate with Fairblock
-              </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Unlock programmable privacy for your application. Access our
-                core SDK documentation and partner resources.
-              </p>
+              <div className="space-y-3">
+                <a
+                  href="https://partners.fairblock.network/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-between p-5 bg-[#1E4FD6] text-white transition-all hover:bg-[#0F36A8]"
+                >
+                  <span className="text-xs font-bold uppercase tracking-widest">
+                    Partner Portal
+                  </span>
+                  <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </a>
+
+                <a
+                  href="https://docs.fairblock.network"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-between p-5 border border-slate-200 text-[#0F172A] hover:border-[#1E4FD6] transition-all bg-white"
+                >
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#1E4FD6]">
+                    Developer Docs
+                  </span>
+                  <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-[#1E4FD6] transition-all" />
+                </a>
+              </div>
             </div>
-
-            <div className="space-y-3">
-              <a
-                href="https://partners.fairblock.network/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between p-5 bg-[#1E4FD6] text-white transition-all hover:bg-[#0F36A8]"
-              >
-                <span className="text-xs font-bold uppercase tracking-widest">
-                  Partner Portal
-                </span>
-                <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
-
-              <a
-                href="https://docs.fairblock.network"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between p-5 border border-slate-200 text-[#0F172A] hover:border-[#1E4FD6] transition-all bg-white"
-              >
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-600 group-hover:text-[#1E4FD6]">
-                  Developer Docs
-                </span>
-                <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-[#1E4FD6] transition-all" />
-              </a>
-            </div>
-          </div>
-        </aside>
+          </aside>
+        )}
       </div>
     </div>
   );

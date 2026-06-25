@@ -55,15 +55,19 @@ code, pre, .font-mono {
 
 @layer utilities {
   .btn-primary {
-    @apply bg-[#1E4FD6] text-white px-6 py-3 hover:bg-[#153bb0] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2;
+    @apply bg-[#1E4FD6] text-white px-4 py-2 hover:bg-[#153bb0] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2 text-sm;
     border-radius: 0;
   }
   .btn-secondary {
-    @apply border border-[#1E4FD6] text-[#1E4FD6] px-6 py-3 hover:bg-[#1E4FD6] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2;
+    @apply border border-[#1E4FD6] text-[#1E4FD6] px-4 py-2 hover:bg-[#1E4FD6] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2 text-sm;
+    border-radius: 0;
+  }
+  .btn-anon {
+    @apply bg-[#0F172A] text-white px-4 py-2 hover:bg-black transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2 text-sm;
     border-radius: 0;
   }
   .input-primary {
-    @apply border border-slate-200 px-4 py-3 outline-none focus:border-[#1E4FD6] focus:ring-1 focus:ring-[#1E4FD6] w-full bg-white transition-all duration-200;
+    @apply border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#1E4FD6] focus:ring-1 focus:ring-[#1E4FD6] w-full bg-white transition-all duration-200;
     border-radius: 0;
   }
   .card {

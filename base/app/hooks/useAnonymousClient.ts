@@ -45,7 +45,7 @@ function wrapSignerForBrowser(signer: ethers.Signer): ethers.Signer {
 }
 
 export function useAnonymousClient() {
-  const { authenticated, user } = usePrivy();
+  const { authenticated } = usePrivy();
   const { wallets } = useWallets();
   const [config, setConfig] = useState<AnonymousConfig>(DEFAULT_CONFIG);
   const client = useMemo<AnonymousTransferClient | null>(() => {
@@ -171,7 +171,7 @@ export function useAnonymousClient() {
     return () => {
       cancelled = true;
     };
-  }, [authenticated, wallets, config.chainId, user]);
+  }, [authenticated, wallets, config.chainId]);
 
   // Load saved account ID from localStorage
   useEffect(() => {
@@ -278,7 +278,7 @@ export function useAnonymousClient() {
   useEffect(() => {
     if (!signer) return;
     fetchBalancesRef.current(true);
-    const interval = setInterval(() => fetchBalancesRef.current(true), 15000);
+    const interval = setInterval(() => fetchBalancesRef.current(true), 30000);
     return () => clearInterval(interval);
   }, [signer, accountId, anonymousKeys]);
 
@@ -371,8 +371,8 @@ export function useAnonymousClient() {
         });
         await client.waitForRequest(result.request_id);
         const hash = result.tx_hash || result.request_id;
-        setTimeout(() => fetchBalancesRef.current(true), 3000);
         setLastTxHash(hash || null);
+        fetchBalancesRef.current(true);
         return { hash: hash || "" };
       } catch (err) {
         const msg = parseError(err as AppError);
@@ -408,8 +408,8 @@ export function useAnonymousClient() {
         });
         await client.waitForRequest(result.request_id);
         const hash = result.tx_hash || result.request_id;
-        setTimeout(() => fetchBalancesRef.current(true), 3000);
         setLastTxHash(hash || null);
+        fetchBalancesRef.current(true);
         return { hash: hash || "" };
       } catch (err) {
         const msg = parseError(err as AppError);
@@ -445,8 +445,8 @@ export function useAnonymousClient() {
         });
         await client.waitForRequest(result.request_id);
         const hash = result.tx_hash || result.request_id;
-        setTimeout(() => fetchBalancesRef.current(true), 3000);
         setLastTxHash(hash || null);
+        fetchBalancesRef.current(true);
         return { hash: hash || "" };
       } catch (err) {
         const msg = parseError(err as AppError);

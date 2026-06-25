@@ -425,7 +425,7 @@ export default function AnonymousDashboard() {
                           ? "Recipient Address"
                           : "Recipient Account ID"}
                       </label>
-                      {transferMode === "public" && (
+                      {transferMode === "public" ? (
                         <button
                           type="button"
                           onClick={() =>
@@ -436,6 +436,14 @@ export default function AnonymousDashboard() {
                           className="text-[10px] text-[#0F172A] hover:underline font-mono"
                         >
                           Use demo address
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setTransferTarget("test1")}
+                          className="text-[10px] text-[#0F172A] hover:underline font-mono"
+                        >
+                          Use demo account
                         </button>
                       )}
                     </div>

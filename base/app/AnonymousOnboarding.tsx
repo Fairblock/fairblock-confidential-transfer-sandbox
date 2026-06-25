@@ -480,7 +480,6 @@ export default function AnonymousOnboarding({
               className="absolute left-0 top-0 z-0 size-full pointer-events-none"
               options={{ particleCount: 150, spread: 120 }}
             />
-            <div className="text-6xl mb-4 relative z-10">🎭</div>
             <h3 className="text-2xl font-bold relative z-10 font-serif">
               You&apos;re Anonymous!
             </h3>
